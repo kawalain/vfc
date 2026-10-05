@@ -4,7 +4,7 @@
 
 Maintainable PowerShell sources live under `src/`, grouped by responsibility: `gui/`, `cli/`, `fonts/`, `games/`, `vpk/`, `keyvalues/`, `schemes/`, and supporting service directories. `src/bootstrap/Parameters.ps1` must load first, while `src/EntryPoint.ps1` must load last. The authoritative order is the `$sourceFiles` list in `Build.ps1`.
 
-Self-tests are stored in `src/tests/` and bundled into the release. Documentation belongs in `README.md` and `docs/`. The repository-root `VGUIFontChanger.ps1` is generated distribution output; do not edit it directly, and never commit it — CI builds it from `src/`.
+Self-tests are stored in `src/tests/` and bundled into the release. Documentation belongs in `README.md` and `docs/`. The repository-root `VGUIFontChanger.ps1` is generated distribution output; do not edit it directly, and never commit it; CI builds it from `src/`.
 
 ## Build, Test, and Development Commands
 
@@ -23,7 +23,10 @@ Run commands from the repository root. Compatibility tests require both Windows 
 
 Target Windows PowerShell 5.1 and PowerShell 7 on Windows using built-in .NET APIs. Avoid dependencies that users must install. Use four-space indentation for new code, `PascalCase` for types, and approved PowerShell `Verb-Noun` names for functions. Keep `$script:` state explicit and limited. Add new source files to the ordered list in `Build.ps1`. Preserve CRLF endings for `.ps1` files.
 
-Write documentation and code comments in English. Korean text is reserved for localized UI resources, font-family fixtures, and localization tests.
+Write documentation and code comments in English. Keep punctuation plain ASCII:
+no em or en dashes, middle dots, ellipses or other decorative Unicode characters.
+Korean text is reserved for localized UI resources, font-family fixtures, and
+localization tests.
 
 ## Testing Guidelines
 

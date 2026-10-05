@@ -15,7 +15,7 @@ while building VGUIFontChanger.
 
 ## Scheme discovery
 
-- Output lives at `<game-directory>/custom/!VGUIFontChanger/resource/…Scheme.res`.
+- Output lives at `<game-directory>/custom/!VGUIFontChanger/resource/*Scheme.res`.
 - ClientScheme, SourceScheme and ChatScheme are included when present;
   additional `resource/**/*scheme*.res` files in loose directories/VPKs are
   discovered, and nested virtual paths are preserved in output.
@@ -38,7 +38,7 @@ while building VGUIFontChanger.
 
 ## Font registration
 
-- Selecting a family — even the original family — copies its actual font file
+- Selecting a family, even the original family, copies its actual font file
   into `resource/fonts/vguifontchanger/` under its full SHA-256 and extension.
   Unresolved selections fail Apply instead of silently depending on fonts
   installed in Windows.
@@ -79,7 +79,7 @@ while building VGUIFontChanger.
 - `glyph set` is the engine term for the numbered blocks under an alias:
   each matching block is applied to the font handle via
   `ISurface::SetFontGlyphSet` / `SetBitmapFontGlyphSet`. The block keys
-  themselves (`1`, `2`, …) are arbitrary; the engine never reads them.
+  themselves (`1`, `2` and so on) are arbitrary; the engine never reads them.
 
 ## Alias resolution
 
@@ -88,8 +88,8 @@ while building VGUIFontChanger.
   files never shadow each other; the binding that matters is the one in the
   scheme the drawing panel uses.
 - The HUD and most game UI load `ClientScheme.res`. The engine's own panels
-  (console, loading screens, dialogs) use the default scheme — the first one
-  loaded, `SourceScheme.res` — which is also the fallback for any panel
+  (console, loading screens, dialogs) use the default scheme (the first one
+  loaded, `SourceScheme.res`), which is also the fallback for any panel
   without an explicit scheme. Stock TF2's `ClientScheme.res` does not define
   `ConsoleText` at all; it is native to `SourceSchemeBase.res`, so the
   console font always comes from the SourceScheme chain. Dedicated schemes

@@ -16,7 +16,7 @@ must be treated separately.
 
 `0x0000 0xFFFF` is the inclusive Unicode Basic Multilingual Plane. It is not a
 file byte range, glyph count, or code-page identifier. It includes Hangul
-syllables U+AC00–U+D7A3 and Hangul Jamo, but it neither creates missing glyphs
+syllables U+AC00-U+D7A3 and Hangul Jamo, but it neither creates missing glyphs
 nor enables characters outside the BMP.
 
 The published [Source `FontManager.cpp`

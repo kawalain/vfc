@@ -4,16 +4,16 @@
 
 1. [Document scope and interpretation principles](#1-document-scope-and-interpretation-principles)
 2. [Core HUD](#2-core-hud)
-3. [Scoreboard · round results · match HUD](#3-scoreboard--round-results--match-hud)
-4. [Spectating · freeze cam · coach](#4-spectating--freeze-cam--coach)
-5. [Game chat · lobby chat](#5-game-chat--lobby-chat)
-6. [Developer console · engine UI](#6-developer-console--engine-ui)
-7. [net_graph · FPS · debug UI](#7-net_graph--fps--debug-ui)
-8. [Team selection · class selection · Intro · Map Info](#8-team-selection--class-selection--intro--map-info)
-9. [Main menu · GameUI](#9-main-menu--gameui)
-10. [Inventory · loadout · item UI](#10-inventory--loadout--item-ui)
-11. [Achievements · Stats](#11-achievements--stats)
-12. [Matchmaking · Lobby · Competitive](#12-matchmaking--lobby--competitive)
+3. [Scoreboard, round results, match HUD](#3-scoreboard-round-results-match-hud)
+4. [Spectating, freeze cam, coach](#4-spectating-freeze-cam-coach)
+5. [Game chat, lobby chat](#5-game-chat-lobby-chat)
+6. [Developer console, engine UI](#6-developer-console-engine-ui)
+7. [net_graph, FPS, debug UI](#7-net_graph-fps-debug-ui)
+8. [Team selection, class selection, Intro, Map Info](#8-team-selection-class-selection-intro-map-info)
+9. [Main menu, GameUI](#9-main-menu-gameui)
+10. [Inventory, loadout, item UI](#10-inventory-loadout-item-ui)
+11. [Achievements, Stats](#11-achievements-stats)
+12. [Matchmaking, Lobby, Competitive](#12-matchmaking-lobby-competitive)
 13. [Mann vs. Machine](#13-mann-vs-machine)
 14. [Symbol / icon aliases](#14-symbol--icon-aliases)
 15. [Reverse index: alias → actual usage](#15-reverse-index-alias--actual-usage)
@@ -106,7 +106,7 @@ Key principles:
 
 ---
 
-## 3. Scoreboard · round results · match HUD
+## 3. Scoreboard, round results, match HUD
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -148,7 +148,7 @@ Key principles:
 
 ---
 
-## 4. Spectating · freeze cam · coach
+## 4. Spectating, freeze cam, coach
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -168,7 +168,7 @@ Key principles:
 
 ---
 
-## 5. Game chat · lobby chat
+## 5. Game chat, lobby chat
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -185,7 +185,7 @@ separate settings even though the alias string is identical.
 
 ---
 
-## 6. Developer console · engine UI
+## 6. Developer console, engine UI
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -205,7 +205,7 @@ separate settings even though the alias string is identical.
 
 ---
 
-## 7. net_graph · FPS · debug UI
+## 7. net_graph, FPS, debug UI
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -220,7 +220,7 @@ separate settings even though the alias string is identical.
 
 ---
 
-## 8. Team selection · class selection · Intro · Map Info
+## 8. Team selection, class selection, Intro, Map Info
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -246,7 +246,7 @@ separate settings even though the alias string is identical.
 
 ---
 
-## 9. Main menu · GameUI
+## 9. Main menu, GameUI
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -259,7 +259,7 @@ separate settings even though the alias string is identical.
 
 ---
 
-## 10. Inventory · loadout · item UI
+## 10. Inventory, loadout, item UI
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -289,7 +289,7 @@ separate settings even though the alias string is identical.
 
 ---
 
-## 11. Achievements · Stats
+## 11. Achievements, Stats
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -300,7 +300,7 @@ separate settings even though the alias string is identical.
 
 ---
 
-## 12. Matchmaking · Lobby · Competitive
+## 12. Matchmaking, Lobby, Competitive
 
 | Screen element | Scheme | Alias | Notes |
 |---|---|---|---|
@@ -404,7 +404,7 @@ safest to exclude them from automatic replacement.
 ### 16.1 The same alias string under a different scheme is a different setting
 
 Every scheme keeps a private alias table, so identical strings under different
-schemes never merge — see [VGUI-NOTES](VGUI-NOTES.md) ("Alias resolution") for
+schemes never merge; see [VGUI-NOTES](VGUI-NOTES.md) ("Alias resolution") for
 the engine-level evidence. The settings model must therefore key on the
 combination, not on the alias string alone.
 

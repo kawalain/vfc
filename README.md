@@ -25,8 +25,8 @@ irm vfc.vmm.pw/0.2.0 | iex
 2. Choose a font family or adjust sizes in the list. The
    [TF2 alias map](docs/VGUI-ALIASES-TF2.md) documents which alias is used by
    which interface.
-3. Apply — the override is written to the game's `custom/!VGUIFontChanger` mod.
-4. Uninstall anytime — the generated mod is removed and the game falls back to
+3. Apply. The override is written to the game's `custom/!VGUIFontChanger` mod.
+4. Uninstall anytime. The generated mod is removed and the game falls back to
    its original fonts.
 
 ## FAQ
@@ -45,8 +45,8 @@ Q. Is this project slop?
 > Yes. 100% slop. But it was useful, right?
 
 See [docs](docs) for the source-tree structure and findings about Source VGUI
-fonts: [structure](docs/STRUCTURE.md) · [VGUI notes](docs/VGUI-NOTES.md) ·
-[font investigation](docs/FONT-INVESTIGATION.md) ·
+fonts: [structure](docs/STRUCTURE.md), [VGUI notes](docs/VGUI-NOTES.md),
+[font investigation](docs/FONT-INVESTIGATION.md),
 [TF2 alias map](docs/VGUI-ALIASES-TF2.md).
 
 ## License
