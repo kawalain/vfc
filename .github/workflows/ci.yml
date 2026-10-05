@@ -74,7 +74,25 @@ jobs:
           $range = if ($previous) { '{0}..HEAD' -f $previous } else { 'HEAD' }
           $format = ('- [`%h`]({0}/commit/%H) %s' -f $repo)
           $commits = @(git log $range --no-decorate --pretty="format:$format")
-          $notes = @('## Changes', '') + $commits + @('')
+          # Group commits under a header per Conventional Commits type.
+          $order = 'feat', 'fix', 'perf', 'refactor', 'docs', 'test', 'build', 'ci', 'chore'
+          $headers = @{ feat = 'Features'; fix = 'Fixes'; perf = 'Performance'; refactor = 'Refactoring'; docs = 'Documentation'; test = 'Tests'; build = 'Build'; ci = 'CI'; chore = 'Chores' }
+          $groups = [ordered]@{}
+          foreach ($line in $commits) {
+            $subject = if ($line -match '^\- \[`[^`]+`\]\([^)]+\) (.*)$') { $Matches[1] } else { $line }
+            $type = if ($subject -match '^([a-zA-Z]+)(\([^)]*\))?!?:') { $Matches[1].ToLowerInvariant() } else { '' }
+            $key = if ($headers.ContainsKey($type)) { $type } else { 'other' }
+            if (-not $groups.Contains($key)) { $groups[$key] = [System.Collections.Generic.List[string]]::new() }
+            $groups[$key].Add($line)
+          }
+          $notes = [System.Collections.Generic.List[string]]::new(@('## Changes', ''))
+          foreach ($key in ($order + 'other')) {
+            if (-not $groups.Contains($key)) { continue }
+            $title = if ($key -eq 'other') { 'Other changes' } else { $headers[$key] }
+            $notes.Add('### ' + $title); $notes.Add('')
+            foreach ($line in $groups[$key]) { $notes.Add($line) }
+            $notes.Add('')
+          }
           [IO.File]::WriteAllText((Join-Path $PWD 'release-notes.md'), ($notes -join [Environment]::NewLine), (New-Object Text.UTF8Encoding($false)))
       - name: Create release
         if: steps.check.outputs.release == 'true'
