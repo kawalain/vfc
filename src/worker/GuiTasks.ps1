@@ -13,6 +13,8 @@ function Start-GuiTask {
     $State.Work.LogLevel='INFO'
     if($model -and $model.Preferences.ContainsKey('LogLevel') -and $model.Preferences['LogLevel']){$State.Work.LogLevel=[string]$model.Preferences['LogLevel']}
     $State.Work.LaunchGame=($Task -eq 'Build' -and $model -and $model.Preferences.ContainsKey('LaunchGame') -and $model.Preferences['LaunchGame'])
+    $State.Work.EffectiveOnly=$true
+    if($model -and $model.Preferences.ContainsKey('EffectiveOnly')){$State.Work.EffectiveOnly=[bool]$model.Preferences['EffectiveOnly']}
     $State.Work.LogPath=New-OperationLog $Task $Game
     $State.CurrentLogPath=$State.Work.LogPath
     $State.Task=$Task
@@ -32,7 +34,7 @@ function Start-GuiTask {
             Set-WorkStatus 'Loading Windows font previews'
             $families=@(Get-InstalledFontFamilies)
             Test-WorkCancellation
-            $summary=@(Get-FontSummary $records)
+            $summary=@(Get-FontSummary $records -All:(-not $operationState.EffectiveOnly))
             Set-WorkStatus 'Loading source locations'
             Add-FontUsageContext $summary $resolved.Sources
             # Keep the immutable baseline and indexes alive across GUI workers.

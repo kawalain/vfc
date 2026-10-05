@@ -17,6 +17,8 @@ function Invoke-HierarchySelfTest {
     if(@($dedupeSummary | Where-Object Font -eq 'Wingdings').Count -ne 1){throw 'Engine default scheme aliases must remain visible when unique'}
     $clientAlias=@($dedupeSummary | Where-Object Font -eq 'Tahoma')
     if($clientAlias.Count -ne 1 -or @($clientAlias[0].Locations).Count -ne 1){throw 'Effective alias selection failed'}
+    $allSummary=@(Get-FontSummary @(Get-FontRecords @($clientDoc,$sourceDoc,$dedicatedDoc)) -All)
+    if(@($allSummary | Where-Object Font -eq 'Verdana').Count -ne 1 -or @($allSummary | Where-Object Font -eq 'Lucida Console').Count -ne 1){throw 'Summary -All must list every definition'}
     $fixture=ConvertFrom-KeyValuesText '"Scheme" { "Fonts" { "Chat" { "1" { "name" "Verdana" [!$OSX] "tall" "10" "yres" "720 1080" } "2" { "name" "Verdana" "tall" "20" "yres" "1081 2160" } } "Console" { "1" { "name" "Verdana" "tall" "12" } } } }' 'hierarchy-fixture'
     $fixture | Add-Member NoteProperty VirtualPath 'resource/ClientScheme.res'
     $fixture | Add-Member NoteProperty Entry 'hierarchy-fixture'

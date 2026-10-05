@@ -80,8 +80,8 @@ function Select-EffectiveAliasRecords {
     return $result.ToArray()
 }
 function Get-FontSummary {
-    param([object[]]$Records)
-    $records=@(Select-EffectiveAliasRecords $Records)
+    param([object[]]$Records,[switch]$All)
+    $records=if($All){@($Records)}else{@(Select-EffectiveAliasRecords $Records)}
     $groups = @($records | Group-Object Font | Sort-Object Name)
     foreach ($group in $groups) {
         # A text family can also be used by ButtonText/IconLabel aliases. Hide

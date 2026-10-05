@@ -7,7 +7,7 @@ function Invoke-CliMode {
         $resolved = Get-ResolvedSchemes $resolvedPath $OutputModName
         $records = @(Get-FontRecords $resolved.Documents.ToArray())
         $explicitMap=ConvertTo-ReplacementMap $Replace
-        Get-FontSummary $records | Where-Object { $ShowSymbols -or $_.Kind -ne 'Symbol' -or $explicitMap.ContainsKey($_.Font) } | Format-Table Font, Sizes, Count -AutoSize
+        Get-FontSummary $records -All:$AllAliases | Where-Object { $ShowSymbols -or $_.Kind -ne 'Symbol' -or $explicitMap.ContainsKey($_.Font) } | Format-Table Font, Sizes, Count -AutoSize
         return
     }
     $map = ConvertTo-ReplacementMap $Replace

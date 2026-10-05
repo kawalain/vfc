@@ -30,7 +30,8 @@ function Show-VguiFontGui {
     $null=$editMenu.DropDownItems.Add((New-Object Windows.Forms.ToolStripSeparator))
     & $addMenu $editMenu 'Reset' 'Delete'
     $null=$editMenu.DropDownItems.Add((New-Object Windows.Forms.ToolStripSeparator));& $addMenu $editMenu 'Find' 'Control,F'
-    & $addMenu $viewMenu 'ExpandAll' ''; & $addMenu $viewMenu 'CollapseAll' ''; & $addMenu $viewMenu 'Symbols' ''
+    & $addMenu $viewMenu 'ExpandAll' ''; & $addMenu $viewMenu 'CollapseAll' ''; & $addMenu $viewMenu 'Symbols' ''; & $addMenu $viewMenu 'EffectiveOnly' ''
+    $commands.EffectiveOnly.CheckOnClick=$true
     $languageMenu=New-Object Windows.Forms.ToolStripMenuItem; $themeMenu=New-Object Windows.Forms.ToolStripMenuItem
     $null=$viewMenu.DropDownItems.Add($languageMenu); $null=$viewMenu.DropDownItems.Add($themeMenu)
     $languages=@{}; foreach($language in @('en-US','ko-KR')){$item=New-Object Windows.Forms.ToolStripMenuItem; $item.Text=if($language -eq 'ko-KR'){'한국어 (ko-KR)'}else{'English (en-US)'}; $item.Tag=$language; $null=$languageMenu.DropDownItems.Add($item);$languages[$language]=$item}
@@ -190,6 +191,7 @@ function Show-VguiFontGui {
         foreach($key in $logLevels.Keys){$logLevels[$key].Checked=($key -eq $state.Model.Preferences.LogLevel)}
         $commands.Symbols.Checked=[bool]$state.Model.Preferences.Symbols
         $commands.LaunchGame.Checked=[bool]$state.Model.Preferences.LaunchGame
+        $commands.EffectiveOnly.Checked=($state.Model.Preferences.EffectiveOnly -ne $false)
         $commands.Undo.Enabled=($state.Model.Undo.Count -gt 0 -and -not $state.Pipeline)
         $commands.Redo.Enabled=($state.Model.Redo.Count -gt 0 -and -not $state.Pipeline)
         $commands.Apply.Enabled=($state.Model.Roots.Count -gt 0 -and -not $state.Pipeline)
@@ -338,6 +340,13 @@ function Show-VguiFontGui {
     }
     $commands.Reset.Add_Click({& $resetValues @($grid.SelectedRows | ForEach-Object {[string]$_.Tag})})
     $commands.LaunchGame.Add_Click({$state.Model.Preferences.LaunchGame=[bool]$commands.LaunchGame.Checked;& $persistUi})
+    $commands.EffectiveOnly.Add_Click({
+        $state.Model.Preferences.EffectiveOnly=[bool]$commands.EffectiveOnly.Checked;& $persistUi
+        if($SmokeTest){return}
+        if(-not $state.Game -or $state.Pipeline){return}
+        if(-not (& $confirmDiscard)){return}
+        & $startScan $state.Game
+    })
     $commands.Symbols.Add_Click({
         $before=Get-ModelSnapshot $state.Model;$state.Model.Preferences.Symbols=-not $state.Model.Preferences.Symbols
         $null=Complete-ModelChange $state.Model $before;& $rebuildRows;& $refresh;& $persistUi
@@ -701,6 +710,12 @@ function Show-VguiFontGui {
                 if(-not $state.Model.Preferences.LaunchGame){throw 'Launch game preference toggle failed'}
                 $commands.LaunchGame.PerformClick()
                 if($state.Model.Preferences.LaunchGame){throw 'Launch game preference toggle failed'}
+                if(-not $commands.EffectiveOnly.CheckOnClick){throw 'Effective aliases option failed'}
+                if($state.Model.Preferences.EffectiveOnly -eq $false){throw 'Effective aliases default failed'}
+                $commands.EffectiveOnly.PerformClick()
+                if($state.Model.Preferences.EffectiveOnly){throw 'Effective aliases preference toggle failed'}
+                $commands.EffectiveOnly.PerformClick()
+                if($state.Model.Preferences.EffectiveOnly -eq $false){throw 'Effective aliases preference toggle failed'}
                 if($contextPanel.Controls.Count -ne 5 -or $sizeUnit.Text -ne 'px'){throw 'Compact context menu test failed'}
                 $null=$form.Handle;$form.UpdateUiDpi(96)
                 $nodesBefore=$state.Model.Settings|ConvertTo-Json -Depth 12 -Compress
