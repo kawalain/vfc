@@ -71,6 +71,24 @@ while building VGUIFontChanger.
   configuration. `FontInfo.kv` is engine configuration, not a second script or
   an external dependency.
 
+## Alias resolution
+
+- Every scheme file becomes its own scheme with a private alias table
+  (verified against the published engine source). Definitions in different
+  files never shadow each other; the binding that matters is the one in the
+  scheme the drawing panel uses.
+- The HUD and most game UI load `ClientScheme.res`. Panels without their own
+  scheme fall back to the engine default scheme (`SourceScheme.res`), and
+  dedicated schemes such as `ChatScheme.res` apply only to the panels that
+  load them.
+- Within one scheme file a duplicated alias name keeps its first definition:
+  the alias dictionary allows duplicate keys, but lookup and glyph setup both
+  read the first entry.
+- The font list therefore shows only the effective alias: `ClientScheme`
+  definitions first, other dedicated schemes next, `SourceScheme` last.
+- `vgui_spew_fonts` (engine console command) dumps every scheme's
+  alias→font table and is the definitive in-game check.
+
 ## Fallback flag
 
 The fallback flag is documented in Valve's public ISurface.h:

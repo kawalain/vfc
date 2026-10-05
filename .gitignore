@@ -35,5 +35,8 @@ tmp/
 *.tmp
 *.bak
 
+# Local reference repositories (e.g. engine source used for analysis)
+refs/
+
 # Generated distribution script (built by CI from src/; never commit it)
 VGUIFontChanger.ps1

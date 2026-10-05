@@ -41,9 +41,46 @@ function Get-FontRecords {
     return $records.ToArray()
 }
 
+function Select-EffectiveAliasRecords {
+    # Engine behaviour (verified against the published engine source): every
+    # scheme file becomes its own scheme with a private alias table, so
+    # definitions in different files never shadow each other — the binding
+    # that matters is the one in the scheme the drawing panel uses. The HUD
+    # and most game UI load ClientScheme.res, panels without a scheme fall
+    # back to the engine default (SourceScheme.res), and dedicated schemes
+    # such as ChatScheme.res only apply to the panels that load them. Within
+    # one file a duplicated alias name keeps its first definition: the alias
+    # dictionary allows duplicate keys but lookup and glyph setup both read
+    # the first entry. Rank ClientScheme first, other dedicated schemes next,
+    # and the engine default last.
+    param([object[]]$Records)
+    if(-not $Records -or @($Records).Count -eq 0){return $Records}
+    $winner=@{}
+    foreach($record in @($Records)){
+        $base=[IO.Path]::GetFileNameWithoutExtension([string]$record.Scheme).ToLowerInvariant()
+        $priority=if($base -eq 'clientscheme'){0}elseif($base -eq 'sourcescheme'){2}else{1}
+        $key=([string]$record.Alias).ToLowerInvariant()
+        $current=$winner[$key]
+        $replace=$true
+        if($current){
+            if($priority -gt $current.Priority){$replace=$false}
+            elseif($priority -eq $current.Priority){
+                if([string]$record.Scheme -ieq $current.Scheme){$replace=([int]$record.Line -lt [int]$current.Line)}else{$replace=$false}
+            }
+        }
+        if($replace){$winner[$key]=@{Priority=$priority;Scheme=[string]$record.Scheme;Line=[int]$record.Line}}
+    }
+    $result=New-ObjectList
+    foreach($record in @($Records)){
+        $current=$winner[([string]$record.Alias).ToLowerInvariant()]
+        if($current -and [string]$record.Scheme -ieq $current.Scheme){$null=$result.Add($record)}
+    }
+    return $result.ToArray()
+}
 function Get-FontSummary {
     param([object[]]$Records)
-    $groups = @($Records | Group-Object Font | Sort-Object Name)
+    $records=@(Select-EffectiveAliasRecords $Records)
+    $groups = @($records | Group-Object Font | Sort-Object Name)
     foreach ($group in $groups) {
         # A text family can also be used by ButtonText/IconLabel aliases. Hide
         # the whole family only when every use is classified as a symbol.

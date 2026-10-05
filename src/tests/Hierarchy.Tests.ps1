@@ -5,6 +5,15 @@ function Invoke-HierarchySelfTest {
     $mixedModel=New-FontHierarchy $mixedSummary @{}
     $mixedVisible=@(Get-VisibleFontNodes $mixedModel)
     if($mixedVisible -notcontains 'group|tf2secondary_fix' -or $mixedVisible -contains 'group|Marlett'){throw 'Mixed text/button family must be visible while symbol-only families remain hidden'}
+    $clientDoc=ConvertFrom-KeyValuesText '"Scheme" { "Fonts" { "Default" { "1" { "name" "Tahoma" "tall" "12" } } } }' 'dedupe-client'
+    $clientDoc | Add-Member NoteProperty VirtualPath 'resource/ClientScheme.res'
+    $sourceDoc=ConvertFrom-KeyValuesText '"Scheme" { "Fonts" { "Default" { "1" { "name" "Verdana" "tall" "10" } } "EngineOnly" { "1" { "name" "Wingdings" "tall" "10" } } } }' 'dedupe-source'
+    $sourceDoc | Add-Member NoteProperty VirtualPath 'resource/SourceScheme.res'
+    $dedupeSummary=@(Get-FontSummary @(Get-FontRecords @($clientDoc,$sourceDoc)))
+    if(@($dedupeSummary | Where-Object Font -eq 'Verdana').Count -ne 0){throw 'ClientScheme definition must shadow the engine default scheme definition'}
+    if(@($dedupeSummary | Where-Object Font -eq 'Wingdings').Count -ne 1){throw 'Engine default scheme aliases must remain visible when unique'}
+    $clientAlias=@($dedupeSummary | Where-Object Font -eq 'Tahoma')
+    if($clientAlias.Count -ne 1 -or @($clientAlias[0].Locations).Count -ne 1){throw 'Effective alias selection failed'}
     $fixture=ConvertFrom-KeyValuesText '"Scheme" { "Fonts" { "Chat" { "1" { "name" "Verdana" [!$OSX] "tall" "10" "yres" "720 1080" } "2" { "name" "Verdana" "tall" "20" "yres" "1081 2160" } } "Console" { "1" { "name" "Verdana" "tall" "12" } } } }' 'hierarchy-fixture'
     $fixture | Add-Member NoteProperty VirtualPath 'resource/ClientScheme.res'
     $fixture | Add-Member NoteProperty Entry 'hierarchy-fixture'
