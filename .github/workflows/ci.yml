@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: windows-latest
@@ -14,3 +17,64 @@ jobs:
         run: |
           .\Build.ps1
           .\Build.ps1 -Check -Test
+
+  release:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Read script version
+        id: version
+        shell: pwsh
+        run: |
+          $source = Get-Content src/bootstrap/Parameters.ps1 -Raw
+          $version = ([regex]::Match($source, "VfcVersion\s*=\s*'([^']+)'")).Groups[1].Value
+          if (-not $version) { throw 'Could not read the script version from src/bootstrap/Parameters.ps1.' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - name: Check whether this version is already released
+        id: check
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VFC_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $tag = 'v' + $env:VFC_VERSION
+          $null = gh release view $tag --json tagName 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "$tag is already released; skipping."
+            "release=false" >> $env:GITHUB_OUTPUT
+          } else {
+            "release=true" >> $env:GITHUB_OUTPUT
+          }
+      - name: Build release script
+        if: steps.check.outputs.release == 'true'
+        shell: pwsh
+        run: .\Build.ps1
+      - name: Collect release notes
+        if: steps.check.outputs.release == 'true'
+        shell: pwsh
+        env:
+          VFC_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $tag = 'v' + $env:VFC_VERSION
+          $previous = @(git tag --list 'v*' --sort=-v:refname | Select-Object -First 1)[0]
+          $repo = 'https://github.com/' + $env:GITHUB_REPOSITORY
+          # The tag for this version does not exist yet, so the newest existing
+          # version tag is the previous release; without any tag, list everything.
+          $range = if ($previous) { '{0}..HEAD' -f $previous } else { 'HEAD' }
+          $format = ('- [`%h`]({0}/commit/%H) %s' -f $repo)
+          $commits = @(git log $range --no-decorate --pretty="format:$format")
+          $notes = @('## Changes', '') + $commits + @('')
+          [IO.File]::WriteAllText((Join-Path $PWD 'release-notes.md'), ($notes -join [Environment]::NewLine), (New-Object Text.UTF8Encoding($false)))
+      - name: Create release
+        if: steps.check.outputs.release == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VFC_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $tag = 'v' + $env:VFC_VERSION
+          gh release create $tag VGUIFontChanger.ps1 --title "VGUIFontChanger $tag" --notes-file release-notes.md
