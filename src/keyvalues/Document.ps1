@@ -42,23 +42,25 @@ function Get-FontRecords {
 }
 
 function Select-EffectiveAliasRecords {
-    # Engine behaviour (verified against the published engine source): every
-    # scheme file becomes its own scheme with a private alias table, so
-    # definitions in different files never shadow each other — the binding
-    # that matters is the one in the scheme the drawing panel uses. The HUD
-    # and most game UI load ClientScheme.res, panels without a scheme fall
-    # back to the engine default (SourceScheme.res), and dedicated schemes
-    # such as ChatScheme.res only apply to the panels that load them. Within
-    # one file a duplicated alias name keeps its first definition: the alias
-    # dictionary allows duplicate keys but lookup and glyph setup both read
-    # the first entry. Rank ClientScheme first, other dedicated schemes next,
-    # and the engine default last.
+    # Engine behaviour (verified against the published engine source and live
+    # game files): every scheme file becomes its own scheme with a private
+    # alias table, so definitions in different files never shadow each other
+    # — the binding that matters is the one in the scheme the drawing panel
+    # uses. The HUD and most game UI load ClientScheme.res. The engine's own
+    # panels (console, loading screens, dialogs) use the default scheme — the
+    # first one loaded, SourceScheme.res — which is also the fallback for any
+    # panel without an explicit scheme. Dedicated schemes such as
+    # itemtest_scheme.res only apply to the specific panels that load them.
+    # Within one file a duplicated alias name keeps its first definition: the
+    # alias dictionary allows duplicate keys but lookup and glyph setup both
+    # read the first entry. Rank ClientScheme first, the engine default
+    # SourceScheme second, and niche dedicated schemes last.
     param([object[]]$Records)
     if(-not $Records -or @($Records).Count -eq 0){return $Records}
     $winner=@{}
     foreach($record in @($Records)){
         $base=[IO.Path]::GetFileNameWithoutExtension([string]$record.Scheme).ToLowerInvariant()
-        $priority=if($base -eq 'clientscheme'){0}elseif($base -eq 'sourcescheme'){2}else{1}
+        $priority=if($base -eq 'clientscheme'){0}elseif($base -eq 'sourcescheme'){1}else{2}
         $key=([string]$record.Alias).ToLowerInvariant()
         $current=$winner[$key]
         $replace=$true

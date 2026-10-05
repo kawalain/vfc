@@ -77,15 +77,25 @@ while building VGUIFontChanger.
   (verified against the published engine source). Definitions in different
   files never shadow each other; the binding that matters is the one in the
   scheme the drawing panel uses.
-- The HUD and most game UI load `ClientScheme.res`. Panels without their own
-  scheme fall back to the engine default scheme (`SourceScheme.res`), and
-  dedicated schemes such as `ChatScheme.res` apply only to the panels that
-  load them.
+- The HUD and most game UI load `ClientScheme.res`. The engine's own panels
+  (console, loading screens, dialogs) use the default scheme — the first one
+  loaded, `SourceScheme.res` — which is also the fallback for any panel
+  without an explicit scheme. Stock TF2's `ClientScheme.res` does not define
+  `ConsoleText` at all; it is native to `SourceSchemeBase.res`, so the
+  console font always comes from the SourceScheme chain. Dedicated schemes
+  such as `itemtest_scheme.res` only apply to the specific panels that load
+  them.
 - Within one scheme file a duplicated alias name keeps its first definition:
   the alias dictionary allows duplicate keys, but lookup and glyph setup both
   read the first entry.
+- Custom HUDs replace existing aliases through search path precedence: the
+  game's `gameinfo.txt` lists `custom/*` first, and a custom mod's files win
+  over VPK content. A custom mod may also use a stub file with `#base` to
+  redirect (e.g. maxihud's `sourcescheme.res` stub pointing at
+  `sourcescheme_maxihud.res`).
 - The font list therefore shows only the effective alias: `ClientScheme`
-  definitions first, other dedicated schemes next, `SourceScheme` last.
+  definitions first, the engine default `SourceScheme` second, and niche
+  dedicated schemes last.
 - `vgui_spew_fonts` (engine console command) dumps every scheme's
   alias→font table and is the definitive in-game check.
 

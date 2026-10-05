@@ -7,10 +7,13 @@ function Invoke-HierarchySelfTest {
     if($mixedVisible -notcontains 'group|tf2secondary_fix' -or $mixedVisible -contains 'group|Marlett'){throw 'Mixed text/button family must be visible while symbol-only families remain hidden'}
     $clientDoc=ConvertFrom-KeyValuesText '"Scheme" { "Fonts" { "Default" { "1" { "name" "Tahoma" "tall" "12" } } } }' 'dedupe-client'
     $clientDoc | Add-Member NoteProperty VirtualPath 'resource/ClientScheme.res'
-    $sourceDoc=ConvertFrom-KeyValuesText '"Scheme" { "Fonts" { "Default" { "1" { "name" "Verdana" "tall" "10" } } "EngineOnly" { "1" { "name" "Wingdings" "tall" "10" } } } }' 'dedupe-source'
+    $sourceDoc=ConvertFrom-KeyValuesText '"Scheme" { "Fonts" { "Default" { "1" { "name" "Verdana" "tall" "10" } } "EngineOnly" { "1" { "name" "Wingdings" "tall" "10" } } "ConsoleText" { "1" { "name" "Courier New" "tall" "10" } } } }' 'dedupe-source'
     $sourceDoc | Add-Member NoteProperty VirtualPath 'resource/SourceScheme.res'
-    $dedupeSummary=@(Get-FontSummary @(Get-FontRecords @($clientDoc,$sourceDoc)))
+    $dedicatedDoc=ConvertFrom-KeyValuesText '"Scheme" { "Fonts" { "ConsoleText" { "1" { "name" "Lucida Console" "tall" "10" } } } }' 'dedupe-dedicated'
+    $dedicatedDoc | Add-Member NoteProperty VirtualPath 'resource/itemtest_scheme.res'
+    $dedupeSummary=@(Get-FontSummary @(Get-FontRecords @($clientDoc,$sourceDoc,$dedicatedDoc)))
     if(@($dedupeSummary | Where-Object Font -eq 'Verdana').Count -ne 0){throw 'ClientScheme definition must shadow the engine default scheme definition'}
+    if(@($dedupeSummary | Where-Object Font -eq 'Lucida Console').Count -ne 0){throw 'The engine default scheme definition must shadow niche dedicated scheme definitions'}
     if(@($dedupeSummary | Where-Object Font -eq 'Wingdings').Count -ne 1){throw 'Engine default scheme aliases must remain visible when unique'}
     $clientAlias=@($dedupeSummary | Where-Object Font -eq 'Tahoma')
     if($clientAlias.Count -ne 1 -or @($clientAlias[0].Locations).Count -ne 1){throw 'Effective alias selection failed'}
