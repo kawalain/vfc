@@ -1,0 +1,35 @@
+#requires -Version 5.1
+[CmdletBinding()]
+param(
+    [switch] $Cli,
+    [string] $GamePath,
+    [string] $DefaultFont,
+    [string[]] $Replace,
+    [switch] $ListFonts,
+    [switch] $DryRun,
+    [switch] $ShowSymbols,
+    [switch] $Diagnose,
+    [string] $TestFont = 'Pretendard GOV Variable',
+    [int] $DefaultSize,
+    [string[]] $Size,
+    [string[]] $Factor,
+    [switch] $SelfTest,
+    [string] $Locale,
+    [string] $OutputModName = '!VGUIFontChanger',
+    [switch] $NoRun
+)
+
+Set-StrictMode -Version 2.0
+$ErrorActionPreference = 'Stop'
+# Invoke-Expression binds this optional parameter to an empty string. ValidateSet
+# rejects that before startup; validate only explicitly supplied locale values.
+if ($Locale -and $Locale -notin @('en-US','ko-KR')) { throw 'Locale must be en-US or ko-KR.' }
+
+$script:VpkIndexCache = @{}
+$script:VpkToolIndexCache = @{}
+$script:SchemeNames = @('ClientScheme.res', 'SourceScheme.res', 'ChatScheme.res')
+$script:SymbolFontPattern = '(?i)(marlett|webdings|wingdings|symbol|icons?|glyph|buttons?|crosshairs?|halflife2)'
+$script:Work = $null
+$script:GameFontPaths = @{}
+$script:LogPath = ''
+$script:SymbolAliasPattern = '(?i)(icon|glyph|button|crosshair)'

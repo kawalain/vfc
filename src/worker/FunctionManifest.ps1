@@ -1,0 +1,13 @@
+$script:WorkerFunctionNames=@('New-StringList','New-ObjectList','ConvertFrom-VdfEscapedString','Get-SteamRoots','Find-SourceGames','Resolve-GamePath','Read-VpkTreeString','Get-VpkIndex','Get-VpkToolIndex','Read-VpkEntryBytesWithTool','Read-VpkEntryBytes','Convert-BytesToText','Get-SearchSources','Read-VirtualFile','Get-KvTokens','Test-KvConditional','New-KvNode','Read-KvNodeList','ConvertFrom-KeyValuesText','Copy-KvNode','Merge-KvBaseNode','Join-VirtualPath','Resolve-KvDocument','Find-KvChild','Find-KvRoot','Get-FontRecords','Get-FontSummary','ConvertTo-KvQuoted','Write-KvNodeText','ConvertTo-KeyValuesText','Get-ResolvedSchemes','ConvertTo-ReplacementMap','Invoke-FontBuild','Get-InstalledFontFamilies','Test-WindowsFont','Invoke-FontDiagnosis','Test-WorkCancellation','Set-WorkStatus','Get-SettingsRoot','Get-ProfilePath','Read-FontProfile','Save-FontProfile','Get-FontFile','Add-SchemeFontRegistration')
+$script:WorkerFunctionNames += 'Get-GameFontAssets'
+$script:WorkerFunctionNames += 'Write-SettingsFile'
+$script:WorkerFunctionNames += 'Find-DefaultGamePath'
+$script:WorkerFunctionNames += @('Initialize-VpkRuntime','Initialize-VpkIndexes')
+$script:WorkerFunctionNames += 'Get-SchemeDocumentsParallel'
+$script:WorkerFunctionNames += 'Copy-ResolvedSchemes'
+$script:WorkerFunctionNames += @('Get-ScanCacheDirectory','Get-ContentSha256','Get-ScanInputFingerprint','Read-CachedScheme','Save-ScanCache')
+$script:WorkerFunctionNames += 'Initialize-ScanCacheRuntime'
+$script:WorkerFunctionNames += @('Write-VfcLog','Initialize-OperationRuntime','New-OutputBackup','Get-ManagedOutputRoot','Remove-FontOverride','ConvertTo-PortableGameFonts','Test-GeneratedFontRanges','Disable-LegacyFontOverride')
+$script:WorkerFunctionNames += 'Remove-CommitStage'
+$script:WorkerFunctionNames += @('Get-SteamLibraries','Get-GameContext','Expand-GameSearchPath','Get-SchemeVirtualPaths','Get-GeneratedFontDirectory','Read-LayoutPreferences','Get-WindowsGuiLocale')
+$script:WorkerFunctionNames += @('Test-VariableFontFile','New-FontBackendDocument','Get-CanonicalFontName','Add-FontUsageContext','Get-NumberedContext','ConvertTo-PlainValue','ConvertTo-NodeSettings')

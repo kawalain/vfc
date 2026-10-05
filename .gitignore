@@ -1,0 +1,39 @@
+# Local editor and operating-system files
+.vs/
+.vscode/
+.codegraph/
+*.user
+*.suo
+Thumbs.db
+.DS_Store
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local.*
+*.pfx
+*.p12
+*.pem
+*.key
+private/
+.private/
+secrets/
+
+# VGUIFontChanger runtime data, if copied into the repository
+layout.json
+ui.json
+settings-*.json
+logs/
+backups/
+scan-cache/
+*.log
+
+# Temporary build output
+artifacts/
+tmp/
+*.tmp
+*.bak
+
+# Generated distribution script (built by CI from src/; never commit it)
+VGUIFontChanger.ps1
