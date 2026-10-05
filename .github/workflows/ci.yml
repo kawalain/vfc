@@ -41,6 +41,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VFC_VERSION: ${{ steps.version.outputs.version }}
         run: |
+          # Action shells start with ErrorActionPreference=Stop; promote gh's
+          # harmless "release not found" stderr back to a plain exit code.
+          $ErrorActionPreference = 'Continue'
           $tag = 'v' + $env:VFC_VERSION
           $null = gh release view $tag --json tagName 2>$null
           if ($LASTEXITCODE -eq 0) {
