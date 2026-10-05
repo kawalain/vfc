@@ -13,6 +13,12 @@ what can you do ¯\\_(ツ)_/¯
 irm vfc.vmm.pw | iex
 ~~~
 
+To install a specific version instead of the latest release:
+
+~~~powershell
+irm vfc.vmm.pw/0.2.0 | iex
+~~~
+
 See [docs](docs) for the source-tree structure and findings about Source VGUI
 fonts: [structure](docs/STRUCTURE.md) · [VGUI notes](docs/VGUI-NOTES.md) ·
 [font investigation](docs/FONT-INVESTIGATION.md).
