@@ -1,5 +1,9 @@
 # VGUIFontChanger
 
+<p align="center">
+  <img src="assets/screenshot.png" alt="VGUIFontChanger main window" width="640">
+</p>
+
 A VGUI2 font replacement script for Source-engine games.
 
 Built entirely using Codex and GLM. The repository owner, kawalain, claims no
