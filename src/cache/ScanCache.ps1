@@ -2,7 +2,7 @@ function Get-ScanCacheDirectory {
     param([string]$Game,[string]$Mod)
     $sha=[Security.Cryptography.SHA256]::Create()
     try{$id=[BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes(($Game+'|'+$Mod).ToLowerInvariant()))).Replace('-','')}finally{$sha.Dispose()}
-    return Join-Path (Join-Path (Get-SettingsRoot) 'scan-cache') $id
+    return Join-Path (Join-Path (Get-SettingsRoot) 'caches') $id
 }
 function Get-ContentSha256 {
     param([byte[]]$Bytes)
