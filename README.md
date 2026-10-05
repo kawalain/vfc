@@ -31,18 +31,18 @@ irm vfc.vmm.pw/0.2.0 | iex
 
 ## FAQ
 
-**Will this break my game?**
+Q. Will this break my game?
 
-No. Game and mod files are never touched. Deleting the `!VGUIFontChanger`
-folder from `custom` reverts everything at any time.
+> No. Game and mod files are never touched. Deleting the `!VGUIFontChanger`
+> folder from `custom` reverts everything at any time.
 
-**Does one apply last forever?**
+Q. Does one apply last forever?
 
-No. If you install or update a mod that touches the GUI (HUD), apply again.
+> No. If you install or update a mod that touches the GUI (HUD), apply again.
 
-**Is this project slop?**
+Q. Is this project slop?
 
-Yes. 100% slop. But it was useful, right?
+> Yes. 100% slop. But it was useful, right?
 
 See [docs](docs) for the source-tree structure and findings about Source VGUI
 fonts: [structure](docs/STRUCTURE.md) · [VGUI notes](docs/VGUI-NOTES.md) ·
