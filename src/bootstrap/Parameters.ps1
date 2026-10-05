@@ -23,6 +23,11 @@ param(
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
+# Release version, SemVer with the major pinned to 0 while pre-1.0: features
+# bump the minor, fixes bump the patch. Build.ps1 injects the short commit
+# hash of the built revision into $script:VfcCommit.
+$script:VfcVersion = '0.1.0'
+$script:VfcCommit = ''
 # Invoke-Expression binds this optional parameter to an empty string. ValidateSet
 # rejects that before startup; validate only explicitly supplied locale values.
 if ($Locale -and $Locale -notin @('en-US','ko-KR')) { throw 'Locale must be en-US or ko-KR.' }

@@ -31,7 +31,7 @@ Tests use the project's built-in assertion-style self-test functions rather than
 
 ## Commit & Pull Request Guidelines
 
-Write every commit message in English and follow Conventional Commits 1.0.0: `<type>[optional scope][!]: <description>`. Use lowercase types such as `feat`, `fix`, `docs`, `test`, `refactor`, `build`, `ci`, and `chore`, with a concise imperative description. Examples include `feat(gui): add font search` and `fix(cache): preserve dependency fingerprints`. Mark breaking changes with `!` or a `BREAKING CHANGE:` footer. Never commit the generated `VGUIFontChanger.ps1`; it is git-ignored and built by CI from the source changes. Pull requests should explain user-visible behavior, list validation performed, link relevant issues, and include screenshots for visible GUI changes.
+Write every commit message in English and follow Conventional Commits 1.0.0: `<type>[optional scope][!]: <description>`. Use lowercase types such as `feat`, `fix`, `docs`, `test`, `refactor`, `build`, `ci`, and `chore`, with a concise imperative description. Examples include `feat(gui): add font search` and `fix(cache): preserve dependency fingerprints`. Mark breaking changes with `!` or a `BREAKING CHANGE:` footer. Never commit the generated `VGUIFontChanger.ps1`; it is git-ignored and built by CI from the source changes. Bump `$script:VfcVersion` in `src/bootstrap/Parameters.ps1` in the same commit: `fix` bumps the patch, `feat` bumps the minor; the major stays `0`. Pull requests should explain user-visible behavior, list validation performed, link relevant issues, and include screenshots for visible GUI changes.
 
 ## Security & Configuration
 

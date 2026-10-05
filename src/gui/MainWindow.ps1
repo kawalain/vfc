@@ -57,6 +57,9 @@ function Show-VguiFontGui {
     $statusBar=New-Object Windows.Forms.StatusStrip; $statusBar.ShowItemToolTips=$true
     $status=New-Object Windows.Forms.ToolStripStatusLabel; $status.Spring=$true;$status.TextAlign='MiddleLeft'
     $null=$statusBar.Items.Add($status)
+    $versionStatus=New-Object Windows.Forms.ToolStripStatusLabel
+    $versionStatus.Text=if($script:VfcCommit){('{0} ({1})' -f $script:VfcVersion,$script:VfcCommit)}else{[string]$script:VfcVersion}
+    $null=$statusBar.Items.Add($versionStatus)
     $grid=New-Object VguiFontGrid; $grid.Dock='Fill';$grid.AllowUserToAddRows=$false;$grid.AllowUserToDeleteRows=$false
     $grid.RowHeadersVisible=$false;$grid.SelectionMode='FullRowSelect';$grid.MultiSelect=$true;$grid.ReadOnly=$true;$grid.AutoSizeColumnsMode='Fill';$grid.RowTemplate.Height=42
     $null=$grid.Columns.Add('Node','Key')
@@ -628,7 +631,7 @@ function Show-VguiFontGui {
             $state.Model=New-FontHierarchy $fixtureSummary @{Nodes=@{}} $state.Model.Preferences.Locale 'System'
             & $rebuildRows;& $refresh;$form.PerformLayout()
             if($grid.Columns.Contains('Uses') -or $statusBar.Dock -ne 'Bottom' -or $menu.Items.Count -ne 4){throw 'Hierarchy GUI layout test failed'}
-            if($statusBar.Items.Count -ne 1){throw 'Progress/cancel controls must not remain in the status bar'}
+            if($statusBar.Items.Count -ne 2){throw 'Progress/cancel controls must not remain in the status bar'}
             $operation=[hashtable]::Synchronized(@{Cancel=$false;CanCancel=$true;Message='Starting...'})
             $operationDialog=New-AboutDialog $form $state.Model.Preferences.Locale $state.Theme $operation 'Scan'
             try{
@@ -705,6 +708,7 @@ function Show-VguiFontGui {
                 $null=Invoke-ModelHistory $state.Model 'Undo';& $refresh
                 if([string]$grid.Rows[2].Cells['Scale'].Value -ne ''){throw 'Paste undo did not restore inheritance'}
                 if($commands.Save.ShortcutKeys -ne [Windows.Forms.Keys]'Control,S' -or $commands.Apply.ShortcutKeys -ne [Windows.Forms.Keys]'Control,Shift,A'){throw 'Save/apply shortcuts failed'}
+                if($versionStatus.Text -notmatch '^\d+\.\d+\.\d+'){throw 'Status bar version failed'}
                 if(-not $commands.LaunchGame.CheckOnClick){throw 'Launch game option failed'}
                 $commands.LaunchGame.PerformClick()
                 if(-not $state.Model.Preferences.LaunchGame){throw 'Launch game preference toggle failed'}

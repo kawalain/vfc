@@ -61,17 +61,20 @@ function New-AboutDialog {
     # Credits are deliberately identical in every locale.
     $credits=New-Object Windows.Forms.LinkLabel;$credits.Text='Built by Codex · Maintained by kawalain'
     $null=$credits.Links.Add($credits.Text.IndexOf('kawalain'),'kawalain'.Length,'https://steamcommunity.com/id/kawalain')
+    $version=New-Object Windows.Forms.Label
+    $version.Text=if($script:VfcCommit){('{0} ({1})' -f $script:VfcVersion,$script:VfcCommit)}else{[string]$script:VfcVersion}
     $message=New-Object Windows.Forms.Label;$message.AutoEllipsis=$true
     $progress=New-Object Windows.Forms.ProgressBar;$progress.Style='Marquee';$progress.MarqueeAnimationSpeed=30
     $button=New-Object Windows.Forms.Button
     $isOperation=($null -ne $Operation)
+    $version.Visible=-not $isOperation
     if($isOperation){$window.Text=if($Task){Get-UiText ('Task'+$Task) $Language}else{Get-UiText 'Starting' $Language}}
     $message.Visible=$isOperation;$progress.Visible=$isOperation
     $window.OperationActive=$isOperation;$window.ControlBox=-not $isOperation
     if($isOperation){$button.Text=Get-UiText 'Cancel' $Language;$message.Text=Get-UiText 'Starting' $Language}
     else{$button.Text=Get-UiText 'CloseDialog' $Language;$button.DialogResult='OK';$window.AcceptButton=$button;$window.CancelButton=$button}
-    $window.Controls.AddRange(@($title,$description,$credits,$message,$progress,$button))
-    $dialog=@{Window=$window;Title=$title;Description=$description;Credits=$credits;Message=$message;Progress=$progress;Button=$button;Fonts=@{};Operation=$Operation;Language=$Language}
+    $window.Controls.AddRange(@($title,$description,$credits,$version,$message,$progress,$button))
+    $dialog=@{Window=$window;Title=$title;Description=$description;Credits=$credits;Version=$version;Message=$message;Progress=$progress;Button=$button;Fonts=@{};Operation=$Operation;Language=$Language}
     # Capture helper scriptblocks explicitly: event closures live in a dynamic
     # module, where functions defined by a downloaded script aren't guaranteed.
     $metricFont=${function:Get-UiMetricFont};$uiText=${function:Get-UiText};$openProfile=${function:Open-MaintainerProfile}
@@ -79,11 +82,13 @@ function New-AboutDialog {
         $ratio=$window.UiDpi/96.0
         $window.Font=& $metricFont $dialog.Fonts -Dpi $window.UiDpi
         $title.Font=& $metricFont $dialog.Fonts ([single]([Drawing.SystemFonts]::MessageBoxFont.SizeInPoints*$window.UiDpi/72.0*1.5))
-        $height=if($isOperation){262}else{194}
+        $height=if($isOperation){262}else{216}
+        $creditsY=if($isOperation){101}else{121}
         $window.ClientSize=New-Object Drawing.Size([int](480*$ratio),[int]($height*$ratio))
         $title.SetBounds([int](22*$ratio),[int](18*$ratio),[int](436*$ratio),[int](32*$ratio))
         $description.SetBounds([int](22*$ratio),[int](62*$ratio),[int](436*$ratio),[int](26*$ratio))
-        $credits.SetBounds([int](22*$ratio),[int](101*$ratio),[int](436*$ratio),[int](28*$ratio))
+        $version.SetBounds([int](22*$ratio),[int](93*$ratio),[int](436*$ratio),[int](22*$ratio))
+        $credits.SetBounds([int](22*$ratio),[int]($creditsY*$ratio),[int](436*$ratio),[int](28*$ratio))
         $message.SetBounds([int](22*$ratio),[int](142*$ratio),[int](436*$ratio),[int](26*$ratio))
         $progress.SetBounds([int](22*$ratio),[int](178*$ratio),[int](436*$ratio),[int](16*$ratio))
         $button.SetBounds([int](358*$ratio),[int](($height-46)*$ratio),[int](100*$ratio),[int](30*$ratio))
@@ -128,6 +133,7 @@ function Show-AboutWindow {
             if($credits.Text -cne 'Built by Codex · Maintained by kawalain' -or $credits.Links.Count -ne 1 -or $credits.Links[0].LinkData -ne 'https://steamcommunity.com/id/kawalain'){throw 'About credits/link test failed'}
             if($credits.Text.Substring($credits.Links[0].Start,$credits.Links[0].Length) -cne 'kawalain'){throw 'About author link range failed'}
             if($description.Text -cne (Get-UiText 'AboutDescription' $Language)){throw 'About description locale failed'}
+            if($dialog.Version.Text -notmatch '^\d+\.\d+\.\d+'){throw 'About version label failed'}
             if($window.Font.FontFamily.Name -ne [Drawing.SystemFonts]::MessageBoxFont.FontFamily.Name){throw 'About must use Windows system UI font'}
             $null=$window.Handle;$window.UpdateUiDpi(144)
             if($window.ClientSize.Width -ne 720){throw 'About dialog DPI test failed'}

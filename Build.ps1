@@ -66,6 +66,14 @@ foreach ($relativePath in $sourceFiles) {
 }
 
 $content = (($parts -join "`n`n") + "`n").Replace("`n", "`r`n")
+# Stamp the built revision into the release so About and the status bar can
+# report exactly which commit produced the running script.
+$commit = ''
+try {
+    $head = & git -C $repositoryRoot rev-parse --short HEAD 2>$null
+    if ($LASTEXITCODE -eq 0 -and $head) { $commit = ([string]$head).Trim() }
+} catch { }
+$content = $content.Replace("`$script:VfcCommit = ''", ("`$script:VfcCommit = '{0}'" -f $commit))
 $tokens = $null
 $parseErrors = $null
 [Management.Automation.Language.Parser]::ParseInput($content, [ref]$tokens, [ref]$parseErrors) | Out-Null
