@@ -30,7 +30,7 @@ function Invoke-HierarchySelfTest {
     $leaf=$model.Nodes[$chat.Children[0]]
     $console=$model.Nodes[($records | Where-Object Alias -eq 'Console').AliasId]
     if((Get-NodeValue $model $leaf.Id 'Font') -ne 'Tahoma' -or (Get-NodeValue $model $leaf.Id 'Factor') -ne 1.2){throw 'Hierarchy legacy migration failed'}
-    if($records[0].Condition -notmatch 'yres' -or $records[0].Condition -notmatch 'OSX'){throw 'Conditional variant metadata failed'}
+    if($records[0].Condition -notmatch 'yres' -or $records[0].Condition -notmatch 'OSX'){throw 'Conditional glyph set metadata failed'}
     $before=Get-ModelSnapshot $model
     Set-NodeValue $model $chat.Id 'Font' 'Arial';Set-NodeValue $model $leaf.Id 'Font' 'Verdana';Set-NodeValue $model $leaf.Id 'Factor' 1.5
     $null=Complete-ModelChange $model $before
@@ -45,6 +45,9 @@ function Invoke-HierarchySelfTest {
     foreach($badProfile in @(@{Version=99;Nodes=@{}},@{Nodes=@{'group|Verdana'=@{Factor=[double]::NaN}}},@{Nodes=@{'group|Verdana'=@{Factor=5}}},@{Nodes=@{'group|Verdana'=@{Size=20}}},@{Nodes=@{($leaf.Id)=@{Size=513}}},@{Nodes=@{($leaf.Id)=@{Size=1.5}}})){
         $rejected=$false;try{$null=ConvertTo-NodeSettings $badProfile}catch{$rejected=$true};if(-not $rejected){throw 'Malformed profile validation failed'}
     }
+    $legacyId=$leaf.Id -replace [regex]::Escape('|glyphset|'),'|variant|'
+    $migrated=ConvertTo-NodeSettings @{Nodes=@{($legacyId)=@{Size=27}}}
+    if(-not $migrated.ContainsKey($leaf.Id) -or $migrated[$leaf.Id].Size -ne 27){throw 'Legacy variant id migration failed'}
     $oldFunction=(Get-Command Get-ResolvedSchemes).ScriptBlock;$script:HierarchyFixture=$fixture
     $fixtureText=ConvertTo-KeyValuesText $fixture @{}
     try{
@@ -67,11 +70,11 @@ function Invoke-HierarchySelfTest {
         $sizeSettings=ConvertTo-NodeSettings (Get-HierarchyProfile $model)
         $r=Invoke-FontBuild '.' '!fonts' (ConvertTo-ReplacementMap @()) $null -WhatIf -NodeSettings $sizeSettings
         $sizeRecord=$r.Records|Where-Object Id -eq $leaf.Id|Select-Object -First 1
-        if($sizeRecord.Tall -ne '27' -or (Find-KvChild $sizeRecord.VariantNode 'tall_lodef').Value -ne '32'){throw 'Absolute size compiler and resolution-specific size test failed'}
+        if($sizeRecord.Tall -ne '27' -or (Find-KvChild $sizeRecord.GlyphSetNode 'tall_lodef').Value -ne '32'){throw 'Absolute size compiler and resolution-specific size test failed'}
     }finally{Set-Item Function:Get-ResolvedSchemes $oldFunction}
     $model.Settings[$leaf.Id].Remove('Font')
     if((Get-NodeValue $model $leaf.Id 'Font') -ne 'Arial'){throw 'Reset-to-inherited failed'}
     $before=Get-ModelSnapshot $model;$model.Settings=@{};$null=Complete-ModelChange $model $before
     if($model.Redo.Count -ne 0 -or -not (Invoke-ModelHistory $model 'Undo')){throw 'Import/reset history failed'}
-    'Hierarchy settings migration, independent overrides, reset, conditional variants, validation and compiler tests passed.'
+    'Hierarchy settings migration, independent overrides, reset, conditional glyph sets, validation and compiler tests passed.'
 }

@@ -33,14 +33,14 @@ function Set-MenuTheme {
 function Save-GuiPreferences {
     param($Preferences,[string]$Root='')
     if(-not $Root){$Root=Get-SettingsRoot};$null=[IO.Directory]::CreateDirectory($Root)
-    $layout=@{Version=1;Locale=$Preferences.Locale;Theme=$Preferences.Theme;Symbols=[bool]$Preferences.Symbols;ListZoom=[double]$Preferences.ListZoom;GamePath=[string]$Preferences.GamePath;LogLevel=[string]$Preferences.LogLevel;LaunchGame=[bool]$Preferences.LaunchGame;EffectiveOnly=($Preferences.EffectiveOnly -ne $false)}
+    $layout=@{Version=1;Locale=$Preferences.Locale;Theme=$Preferences.Theme;Symbols=[bool]$Preferences.Symbols;ListZoom=[double]$Preferences.ListZoom;GamePath=[string]$Preferences.GamePath;LogLevel=[string]$Preferences.LogLevel;LaunchGame=[bool]$Preferences.LaunchGame;ShowDuplicates=[bool]$Preferences.ShowDuplicates}
     [IO.File]::WriteAllText((Join-Path $Root 'layout.json'),($layout|ConvertTo-Json),(New-Object Text.UTF8Encoding($false)))
 }
 function Read-LayoutPreferences {
     param([string]$Root='')
     if(-not $Root){$Root=Get-SettingsRoot}
     $language=Get-WindowsGuiLocale
-    $layout=@{Locale=$language;Theme='System';Symbols=$false;ListZoom=1.0;GamePath='';LogLevel='INFO';LaunchGame=$false;EffectiveOnly=$true}
+    $layout=@{Locale=$language;Theme='System';Symbols=$false;ListZoom=1.0;GamePath='';LogLevel='INFO';LaunchGame=$false;ShowDuplicates=$false}
     foreach($name in @('layout.json','ui.json')){
         $path=Join-Path $Root $name
         try{
@@ -51,7 +51,8 @@ function Read-LayoutPreferences {
             if($saved.Symbols -is [bool]){$layout.Symbols=$saved.Symbols}
             if($saved.ContainsKey('LogLevel') -and $saved['LogLevel'] -in @('TRACE','DEBUG','INFO','WARN','ERROR')){$layout.LogLevel=$saved['LogLevel']}
             if($saved.ContainsKey('LaunchGame')){$layout.LaunchGame=($saved['LaunchGame'] -eq $true)}
-            if($saved.ContainsKey('EffectiveOnly')){$layout.EffectiveOnly=($saved['EffectiveOnly'] -eq $true)}
+            if($saved.ContainsKey('ShowDuplicates')){$layout.ShowDuplicates=($saved['ShowDuplicates'] -eq $true)}
+            elseif($saved.ContainsKey('EffectiveOnly')){$layout.ShowDuplicates=($saved['EffectiveOnly'] -eq $false)}
             if($saved.ContainsKey('GamePath') -and $saved.GamePath -is [string]){$layout.GamePath=$saved.GamePath}
             if($saved.ContainsKey('ListZoom')){$zoom=[double]$saved.ListZoom;if(-not [double]::IsNaN($zoom) -and $zoom -ge 0.5 -and $zoom -le 3){$layout.ListZoom=$zoom}}
             break

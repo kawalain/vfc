@@ -30,8 +30,8 @@ function Show-VguiFontGui {
     $null=$editMenu.DropDownItems.Add((New-Object Windows.Forms.ToolStripSeparator))
     & $addMenu $editMenu 'Reset' 'Delete'
     $null=$editMenu.DropDownItems.Add((New-Object Windows.Forms.ToolStripSeparator));& $addMenu $editMenu 'Find' 'Control,F'
-    & $addMenu $viewMenu 'ExpandAll' ''; & $addMenu $viewMenu 'CollapseAll' ''; & $addMenu $viewMenu 'Symbols' ''; & $addMenu $viewMenu 'EffectiveOnly' ''
-    $commands.EffectiveOnly.CheckOnClick=$true
+    & $addMenu $viewMenu 'ExpandAll' ''; & $addMenu $viewMenu 'CollapseAll' ''; & $addMenu $viewMenu 'Symbols' ''; & $addMenu $viewMenu 'ShowDuplicates' ''
+    $commands.ShowDuplicates.CheckOnClick=$true
     $languageMenu=New-Object Windows.Forms.ToolStripMenuItem; $themeMenu=New-Object Windows.Forms.ToolStripMenuItem
     $null=$viewMenu.DropDownItems.Add($languageMenu); $null=$viewMenu.DropDownItems.Add($themeMenu)
     $languages=@{}; foreach($language in @('en-US','ko-KR')){$item=New-Object Windows.Forms.ToolStripMenuItem; $item.Text=if($language -eq 'ko-KR'){'한국어 (ko-KR)'}else{'English (en-US)'}; $item.Tag=$language; $null=$languageMenu.DropDownItems.Add($item);$languages[$language]=$item}
@@ -191,7 +191,7 @@ function Show-VguiFontGui {
         foreach($key in $logLevels.Keys){$logLevels[$key].Checked=($key -eq $state.Model.Preferences.LogLevel)}
         $commands.Symbols.Checked=[bool]$state.Model.Preferences.Symbols
         $commands.LaunchGame.Checked=[bool]$state.Model.Preferences.LaunchGame
-        $commands.EffectiveOnly.Checked=($state.Model.Preferences.EffectiveOnly -ne $false)
+        $commands.ShowDuplicates.Checked=[bool]$state.Model.Preferences.ShowDuplicates
         $commands.Undo.Enabled=($state.Model.Undo.Count -gt 0 -and -not $state.Pipeline)
         $commands.Redo.Enabled=($state.Model.Redo.Count -gt 0 -and -not $state.Pipeline)
         $commands.Apply.Enabled=($state.Model.Roots.Count -gt 0 -and -not $state.Pipeline)
@@ -340,8 +340,8 @@ function Show-VguiFontGui {
     }
     $commands.Reset.Add_Click({& $resetValues @($grid.SelectedRows | ForEach-Object {[string]$_.Tag})})
     $commands.LaunchGame.Add_Click({$state.Model.Preferences.LaunchGame=[bool]$commands.LaunchGame.Checked;& $persistUi})
-    $commands.EffectiveOnly.Add_Click({
-        $state.Model.Preferences.EffectiveOnly=[bool]$commands.EffectiveOnly.Checked;& $persistUi
+    $commands.ShowDuplicates.Add_Click({
+        $state.Model.Preferences.ShowDuplicates=[bool]$commands.ShowDuplicates.Checked;& $persistUi
         if($SmokeTest){return}
         if(-not $state.Game -or $state.Pipeline){return}
         if(-not (& $confirmDiscard)){return}
@@ -398,8 +398,8 @@ function Show-VguiFontGui {
         try{
             $data=ConvertTo-PlainValue ($text|ConvertFrom-Json)
             if($data.VGUIFontChangerValues -ne 1 -or $data.Values -isnot [hashtable]){return $null}
-            $validated=ConvertTo-NodeSettings @{Nodes=@{'group|clipboard|variant|1|1'=$data.Values}}
-            return $validated['group|clipboard|variant|1|1']
+            $validated=ConvertTo-NodeSettings @{Nodes=@{'group|clipboard|glyphset|1|1'=$data.Values}}
+            return $validated['group|clipboard|glyphset|1|1']
         }catch{return $null}
     }
     $pasteValues={param($values=$null)
@@ -624,7 +624,7 @@ function Show-VguiFontGui {
     $form.Add_Shown({$timer.Start();& $startScan $GamePath})
     try{
         if($SmokeTest){
-            $fixtureSummary=@([pscustomobject]@{Font='Tahoma';Kind='Text';Sizes='10';Locations=@([pscustomobject]@{Id='group|Tahoma|alias|fixture|Text|variant|1|1';AliasId='group|Tahoma|alias|fixture|Text';GroupId='group|Tahoma';Alias='Text';Variant='1';Condition='yres 720 1080';Scheme='fixture';Source='fixture';Line=1;Tall='10';Context=(Get-NumberedContext 'name Tahoma' 1)})})
+            $fixtureSummary=@([pscustomobject]@{Font='Tahoma';Kind='Text';Sizes='10';Locations=@([pscustomobject]@{Id='group|Tahoma|alias|fixture|Text|glyphset|1|1';AliasId='group|Tahoma|alias|fixture|Text';GroupId='group|Tahoma';Alias='Text';GlyphSet='1';Condition='yres 720 1080';Scheme='fixture';Source='fixture';Line=1;Tall='10';Context=(Get-NumberedContext 'name Tahoma' 1)})})
             $state.Model=New-FontHierarchy $fixtureSummary @{Nodes=@{}} $state.Model.Preferences.Locale 'System'
             & $rebuildRows;& $refresh;$form.PerformLayout()
             if($grid.Columns.Contains('Uses') -or $statusBar.Dock -ne 'Bottom' -or $menu.Items.Count -ne 4){throw 'Hierarchy GUI layout test failed'}
@@ -710,12 +710,12 @@ function Show-VguiFontGui {
                 if(-not $state.Model.Preferences.LaunchGame){throw 'Launch game preference toggle failed'}
                 $commands.LaunchGame.PerformClick()
                 if($state.Model.Preferences.LaunchGame){throw 'Launch game preference toggle failed'}
-                if(-not $commands.EffectiveOnly.CheckOnClick){throw 'Effective aliases option failed'}
-                if($state.Model.Preferences.EffectiveOnly -eq $false){throw 'Effective aliases default failed'}
-                $commands.EffectiveOnly.PerformClick()
-                if($state.Model.Preferences.EffectiveOnly){throw 'Effective aliases preference toggle failed'}
-                $commands.EffectiveOnly.PerformClick()
-                if($state.Model.Preferences.EffectiveOnly -eq $false){throw 'Effective aliases preference toggle failed'}
+                if(-not $commands.ShowDuplicates.CheckOnClick){throw 'Duplicate aliases option failed'}
+                if($state.Model.Preferences.ShowDuplicates){throw 'Duplicate aliases default must be off'}
+                $commands.ShowDuplicates.PerformClick()
+                if(-not $state.Model.Preferences.ShowDuplicates){throw 'Duplicate aliases preference toggle failed'}
+                $commands.ShowDuplicates.PerformClick()
+                if($state.Model.Preferences.ShowDuplicates){throw 'Duplicate aliases preference toggle failed'}
                 if($contextPanel.Controls.Count -ne 5 -or $sizeUnit.Text -ne 'px'){throw 'Compact context menu test failed'}
                 $null=$form.Handle;$form.UpdateUiDpi(96)
                 $nodesBefore=$state.Model.Settings|ConvertTo-Json -Depth 12 -Compress
@@ -757,7 +757,7 @@ function Show-VguiFontGui {
                 & $runFind -1
                 if([string]$grid.CurrentRow.Tag -ne $root.Children[0]){throw 'Find previous wrap-around failed'}
                 $findBox.Text='yres 720';& $runFind 1 $true
-                if($state.SearchMatches.Count -ne 0 -or $state.SearchIndex -ne -1){throw 'Variant condition must not match'}
+                if($state.SearchMatches.Count -ne 0 -or $state.SearchIndex -ne -1){throw 'Glyph set condition must not match'}
                 $findBox.Text='FIXTURE';& $runFind 1 $true
                 if($state.SearchMatches.Count -ne 1){throw 'Scheme/source filename search failed'}
                 $findBox.Text='tahoma';& $runFind 1 $true

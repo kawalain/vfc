@@ -19,20 +19,20 @@ function Get-FontRecords {
         $fonts = Find-KvChild $scheme 'Fonts'
         if ($null -eq $fonts) { continue }
         foreach ($alias in $fonts.Children) {
-            $variants = if ($alias.Children.Count -gt 0) { $alias.Children.ToArray() } else { @($alias) }
-            foreach ($variant in $variants) {
-                foreach ($property in $variant.Children) {
+            $glyphSets = if ($alias.Children.Count -gt 0) { $alias.Children.ToArray() } else { @($alias) }
+            foreach ($glyphSet in $glyphSets) {
+                foreach ($property in $glyphSet.Children) {
                     if ($property.Key -ieq 'name' -and $property.HasValue) {
                         $kind = if ($property.Value -match $script:SymbolFontPattern -or $alias.Key -match $script:SymbolAliasPattern) { 'Symbol' } else { 'Text' }
-                        $tall = Find-KvChild $variant 'tall'
+                        $tall = Find-KvChild $glyphSet 'tall'
                         $groupId='group|'+[Uri]::EscapeDataString($property.Value)
                         $aliasId=$groupId+'|alias|'+[Uri]::EscapeDataString($document.VirtualPath)+'|'+[Uri]::EscapeDataString($alias.Key)
-                        $baseId=$aliasId+'|variant|'+[Uri]::EscapeDataString($variant.Key)
+                        $baseId=$aliasId+'|glyphset|'+[Uri]::EscapeDataString($glyphSet.Key)
                         if(-not $occurrences.ContainsKey($baseId)){$occurrences[$baseId]=0}; $occurrences[$baseId]++
                         $id=$baseId+'|'+$occurrences[$baseId]
-                        $yres=Find-KvChild $variant 'yres'; $condition=($variant.Condition+' '+$property.Condition).Trim()
+                        $yres=Find-KvChild $glyphSet 'yres'; $condition=($glyphSet.Condition+' '+$property.Condition).Trim()
                         if($yres){$condition=('yres '+$yres.Value+' '+$condition).Trim()}
-                        $null = $records.Add([pscustomobject]@{ Id=$id;GroupId=$groupId;AliasId=$aliasId;Condition=$condition; Scheme=$document.VirtualPath; Alias=$alias.Key; Variant=$variant.Key; Font=$property.Value; Kind=$kind; Node=$property; VariantNode=$variant; Tall=if($tall){$tall.Value}else{''}; Source=$property.Source; Line=$property.Line })
+                        $null = $records.Add([pscustomobject]@{ Id=$id;GroupId=$groupId;AliasId=$aliasId;Condition=$condition; Scheme=$document.VirtualPath; Alias=$alias.Key; GlyphSet=$glyphSet.Key; Font=$property.Value; Kind=$kind; Node=$property; GlyphSetNode=$glyphSet; Tall=if($tall){$tall.Value}else{''}; Source=$property.Source; Line=$property.Line })
                     }
                 }
             }
@@ -87,7 +87,7 @@ function Get-FontSummary {
         # A text family can also be used by ButtonText/IconLabel aliases. Hide
         # the whole family only when every use is classified as a symbol.
         $kind = if (@($group.Group | Where-Object Kind -eq 'Text').Count -eq 0) { 'Symbol' } else { 'Text' }
-        $locations=@($group.Group | ForEach-Object {[pscustomobject]@{Id=$_.Id;AliasId=$_.AliasId;GroupId=$_.GroupId;Condition=$_.Condition;Source=$_.Source;Line=$_.Line;Alias=$_.Alias;Variant=$_.Variant;Scheme=$_.Scheme;Tall=$_.Tall}})
+        $locations=@($group.Group | ForEach-Object {[pscustomobject]@{Id=$_.Id;AliasId=$_.AliasId;GroupId=$_.GroupId;Condition=$_.Condition;Source=$_.Source;Line=$_.Line;Alias=$_.Alias;GlyphSet=$_.GlyphSet;Scheme=$_.Scheme;Tall=$_.Tall}})
         [pscustomobject]@{ Font=$group.Name; Kind=$kind; Count=$group.Count; Sizes=(@($group.Group | ForEach-Object Tall | Sort-Object -Unique) -join ', '); Locations=$locations }
     }
 }

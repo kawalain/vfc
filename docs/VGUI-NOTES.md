@@ -71,6 +71,16 @@ while building VGUIFontChanger.
   configuration. `FontInfo.kv` is engine configuration, not a second script or
   an external dependency.
 
+## Terminology
+
+- `alias` is the engine's own term: the scheme implementation stores
+  `Fonts` entries in an alias table (`m_FontAliases`,
+  `FindFontInAliasList`) and `vgui_spew_fonts` prints them as aliases.
+- `glyph set` is the engine term for the numbered blocks under an alias:
+  each matching block is applied to the font handle via
+  `ISurface::SetFontGlyphSet` / `SetBitmapFontGlyphSet`. The block keys
+  themselves (`1`, `2`, …) are arbitrary; the engine never reads them.
+
 ## Alias resolution
 
 - Every scheme file becomes its own scheme with a private alias table

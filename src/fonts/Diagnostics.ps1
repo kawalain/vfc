@@ -58,8 +58,8 @@ function Invoke-FontDiagnosis {
                 }
             }
             $requestedRecords=@($records | Where-Object Font -eq $engineFamily)
-            $bypassCount=@($requestedRecords | Where-Object {$flag=Find-KvChild $_.VariantNode 'custom'; $flag -and $flag.Value -eq '1'}).Count
-            [pscustomobject]@{ Scheme=$name; Winner=$file.Source; Definitions=$records.Count; RequestedFontCount=$requestedRecords.Count; AsianFallbackBypassCount=$bypassCount; CustomFontRegistrations=$registrations; LegacyVariantRangeCount=@($records | Where-Object { $range=Find-KvChild $_.VariantNode 'range'; $range -and $range.Value -eq '0x0000 0x017F' }).Count }
+            $bypassCount=@($requestedRecords | Where-Object {$flag=Find-KvChild $_.GlyphSetNode 'custom'; $flag -and $flag.Value -eq '1'}).Count
+            [pscustomobject]@{ Scheme=$name; Winner=$file.Source; Definitions=$records.Count; RequestedFontCount=$requestedRecords.Count; AsianFallbackBypassCount=$bypassCount; CustomFontRegistrations=$registrations; LegacyGlyphSetRangeCount=@($records | Where-Object { $range=Find-KvChild $_.GlyphSetNode 'range'; $range -and $range.Value -eq '0x0000 0x017F' }).Count }
         }
     }
     $fontFiles = @()

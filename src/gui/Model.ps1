@@ -17,6 +17,9 @@ function ConvertTo-NodeSettings {
         if($profileMap.Nodes -isnot [hashtable]){throw 'Invalid Nodes settings object.'}
         foreach($id in $profileMap.Nodes.Keys){
             $entry=$profileMap.Nodes[$id]
+            # Glyph sets were called "variants" before the terminology was
+            # aligned with the engine; translate old persisted ids.
+            $id=$id -replace [regex]::Escape('|variant|'),'|glyphset|'
             if($id -notlike 'group|*' -or $entry -isnot [hashtable]){throw 'Invalid node settings.'}
             $setting=@{}
             foreach($key in $entry.Keys){
@@ -29,7 +32,7 @@ function ConvertTo-NodeSettings {
                     $setting.Factor=$factor
                 }elseif($key -eq 'Size'){
                     $size=[double]$entry[$key]
-                    if($id -notlike '*|variant|*' -or [double]::IsNaN($size) -or [double]::IsInfinity($size) -or $size -lt 1 -or $size -gt 512 -or $size -ne [Math]::Round($size)){throw 'Variant size must be 1..512 whole VGUI pixels.'}
+                    if($id -notlike '*|glyphset|*' -or [double]::IsNaN($size) -or [double]::IsInfinity($size) -or $size -lt 1 -or $size -gt 512 -or $size -ne [Math]::Round($size)){throw 'Glyph set size must be 1..512 whole VGUI pixels.'}
                     $setting.Size=[int]$size
                 }else{throw ('Unknown setting: '+$key)}
             }
@@ -52,7 +55,7 @@ function ConvertTo-NodeSettings {
 }
 function New-FontHierarchy {
     param([object[]]$Summary,$Profile,[string]$Language='en-US',[string]$Theme='System')
-    $model=@{Nodes=@{};Roots=(New-StringList);Settings=(ConvertTo-NodeSettings $Profile);Undo=(New-StringList);Redo=(New-StringList);Preferences=@{Locale=$Language;Theme=$Theme;Symbols=$false;ListZoom=1.0;GamePath='';LogLevel='INFO';LaunchGame=$false;EffectiveOnly=$true}}
+    $model=@{Nodes=@{};Roots=(New-StringList);Settings=(ConvertTo-NodeSettings $Profile);Undo=(New-StringList);Redo=(New-StringList);Preferences=@{Locale=$Language;Theme=$Theme;Symbols=$false;ListZoom=1.0;GamePath='';LogLevel='INFO';LaunchGame=$false;ShowDuplicates=$false}}
     foreach($group in $Summary){
         $groupId='group|'+[Uri]::EscapeDataString($group.Font)
         $root=@{Id=$groupId;Parent='';Depth=0;Label=$group.Font;Original=$group.Font;Kind=$group.Kind;Children=(New-StringList);Locations=@($group.Locations);Sizes=$group.Sizes;Expanded=$false}
@@ -63,9 +66,9 @@ function New-FontHierarchy {
                 $model.Nodes[$alias.Id]=$alias; $root.Children.Add($alias.Id)
             }
             $alias=$model.Nodes[$location.AliasId]; $alias.Locations.Add($location)
-            $label=$location.Variant; if($location.Condition){$label+='  ['+$location.Condition+']'}
-            $variant=@{Id=$location.Id;Parent=$alias.Id;Depth=2;Label=$label;Original=$group.Font;Kind=$group.Kind;Children=(New-StringList);Locations=@($location);Sizes=$location.Tall;Expanded=$false}
-            $model.Nodes[$variant.Id]=$variant; $alias.Children.Add($variant.Id)
+            $label=$location.GlyphSet; if($location.Condition){$label+='  ['+$location.Condition+']'}
+            $glyphSet=@{Id=$location.Id;Parent=$alias.Id;Depth=2;Label=$label;Original=$group.Font;Kind=$group.Kind;Children=(New-StringList);Locations=@($location);Sizes=$location.Tall;Expanded=$false}
+            $model.Nodes[$glyphSet.Id]=$glyphSet; $alias.Children.Add($glyphSet.Id)
         }
     }
     return $model
@@ -96,9 +99,9 @@ function Set-NodeValue {
     if(-not $Model.Nodes.ContainsKey($Id)){throw 'Unknown font hierarchy node.'}
     $node=$Model.Nodes[$Id]
     if($Property -eq 'Size'){
-        if($node.Depth -ne 2){throw 'Absolute size is only supported for variants.'}
+        if($node.Depth -ne 2){throw 'Absolute size is only supported for glyph sets.'}
         $original=0;$null=[int]::TryParse([string]$node.Sizes,[ref]$original)
-        if($original -le 0){throw 'This variant has no numeric tall; edit its parent factor instead.'}
+        if($original -le 0){throw 'This glyph set has no numeric tall; edit its parent factor instead.'}
         if([int]$Value -lt 1 -or [int]$Value -gt 512){throw 'Font size must be 1..512 VGUI pixels.'}
         if($Model.Settings.ContainsKey($Id)){$Model.Settings[$Id].Remove('Factor')}
         $inherited=[int][Math]::Max(1,[Math]::Round($original*[double](Get-NodeValue $Model $Id 'Factor'),0,[MidpointRounding]::AwayFromZero))
@@ -138,7 +141,7 @@ function Get-VisibleFontNodes {
 function Get-FontSearchMatches {
     param($Model,[string]$Query)
     if([string]::IsNullOrWhiteSpace($Query)){return}
-    # Matches are limited to groups and aliases; variants would flood the
+    # Matches are limited to groups and aliases; glyph sets would flood the
     # results because every alias owns several of them.
     $query=$Query.Trim();$matches=New-StringList
     $visit={param([string]$id)

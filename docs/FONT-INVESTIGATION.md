@@ -4,7 +4,7 @@
 
 The examined block belongs under `Scheme / CustomFontFiles / <entry>`. The
 `font` field is a file path, while `name` is the font's actual family name. This
-differs from placing equivalent fields inside a `Fonts` alias or variant.
+differs from placing equivalent fields inside a `Fonts` alias or glyph set.
 
 The published [Source `Scheme.cpp`
 implementation](https://github.com/nillerusr/source-engine/blob/master/vgui2/src/Scheme.cpp)

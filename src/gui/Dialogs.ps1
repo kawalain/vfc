@@ -184,7 +184,7 @@ function Show-FontUsesWindow {
     foreach($group in @($Summary.Locations | Group-Object Source | Sort-Object Name)){
         $null=$text.AppendLine('// File: '+($group.Name -replace '[\r\n]',' '))
         foreach($location in @($group.Group | Sort-Object Line,Alias)){
-            $null=$text.AppendLine(('// Scheme: {0} | Key: {1}/{2} | Line: {3}' -f $location.Scheme,$location.Alias,$location.Variant,$location.Line))
+            $null=$text.AppendLine(('// Scheme: {0} | Key: {1}/{2} | Line: {3}' -f $location.Scheme,$location.Alias,$location.GlyphSet,$location.Line))
             $offset=$text.Length
             if($location.Context.Text){
                 $targets.Add(@{Offset=$offset+$location.Context.Offset;Length=$location.Context.Length})

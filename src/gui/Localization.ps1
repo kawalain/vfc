@@ -16,12 +16,12 @@ function Get-UiText {
         FileMenu='&File';EditMenu='&Edit';ViewMenu='&View';ChooseGame='Choose game folder...';Import='Import settings...';Export='Export settings...';Exit='Exit';Undo='Undo';Redo='Redo'
         Find='Find...';FindNext='Next';FindPrevious='Previous';FindHint='Font, key or file name';FindCount='{0} / {1}';FindEmpty='No matches'
         About='About';AboutDescription='VGUI2 font replacement script';CloseDialog='Close';TaskScan='Scan';TaskSave='Save';TaskBuild='Apply';TaskImport='Import settings';TaskExport='Export settings'
-        ExpandAll='Expand all';CollapseAll='Collapse all';Node='Font group / alias / variant';GameFolder='Game folder'
-        Theme='Theme';ThemeSystem='Follow Windows';ThemeLight='Light';ThemeDark='Dark';ThemeAMOLED='AMOLED (black)';LogLevel='Log level';LaunchGame='Launch game after apply';EffectiveOnly='Effective aliases only'
+        ExpandAll='Expand all';CollapseAll='Collapse all';Node='Font group / alias / glyph set';GameFolder='Game folder'
+        Theme='Theme';ThemeSystem='Follow Windows';ThemeLight='Light';ThemeDark='Dark';ThemeAMOLED='AMOLED (black)';LogLevel='Log level';LaunchGame='Launch game after apply';ShowDuplicates='Show duplicate aliases'
         ResetConfirm='Reset explicit settings to their inherited defaults? Child overrides are kept. Root defaults are the original font and 1.0x.'
         DiscardConfirm='There are unapplied changes. Discard them and continue?'
         Imported='Settings imported. Apply to write the game files.';Exported='Settings exported.'
-        TreeHint='Expand a font group to edit aliases and variants. Double-click an alias or original font to view its source.'
+        TreeHint='Expand a font group to edit aliases and glyph sets. Double-click an alias or original font to view its source.'
         InheritanceHint='● = explicit override. Parent changes propagate only to inherited fields. Double-click an explicit value, or Delete a selected row, to reset.'
     }
     $korean=@{
@@ -40,12 +40,12 @@ function Get-UiText {
         FileMenu='파일(&F)';EditMenu='편집(&E)';ViewMenu='보기(&V)';ChooseGame='게임 폴더 지정...';Import='설정 불러오기...';Export='설정 내보내기...';Exit='종료';Undo='실행 취소';Redo='다시 실행'
         Find='검색...';FindNext='다음';FindPrevious='이전';FindHint='글꼴, 키 또는 파일 이름';FindCount='{0} / {1}';FindEmpty='검색 결과 없음'
         About='About';AboutDescription='VGUI2 글꼴 대체 스크립트';CloseDialog='닫기';TaskScan='스캔';TaskSave='저장';TaskBuild='적용';TaskImport='설정 불러오기';TaskExport='설정 내보내기'
-        ExpandAll='모두 펼치기';CollapseAll='모두 접기';Node='글꼴 집합 / alias / variant';GameFolder='게임 폴더'
-        Theme='테마';ThemeSystem='Windows 설정 따르기';ThemeLight='라이트';ThemeDark='다크';ThemeAMOLED='AMOLED (검정)';LogLevel='로그 레벨';LaunchGame='적용 후 게임 실행';EffectiveOnly='유효 alias만 보기'
+        ExpandAll='모두 펼치기';CollapseAll='모두 접기';Node='글꼴 집합 / 별칭 / 글리프 셋';GameFolder='게임 폴더'
+        Theme='테마';ThemeSystem='Windows 설정 따르기';ThemeLight='라이트';ThemeDark='다크';ThemeAMOLED='AMOLED (검정)';LogLevel='로그 레벨';LaunchGame='적용 후 게임 실행';ShowDuplicates='중복 별칭 보기'
         ResetConfirm='개별 설정을 부모에게 상속받는 기본값으로 되돌릴까요? 하위의 개별 설정은 유지됩니다. 최상위 기본값은 원본 글꼴과 1.0배입니다.'
         DiscardConfirm='아직 적용하지 않은 변경이 있습니다. 변경을 버리고 계속할까요?'
         Imported='설정을 불러왔습니다. 적용하면 게임 파일에 저장됩니다.';Exported='설정을 내보냈습니다.'
-        TreeHint='글꼴 집합을 펼쳐 alias·variant를 설정하세요. alias나 원본 글꼴을 두 번 누르면 원본 코드를 봅니다.'
+        TreeHint='글꼴 집합을 펼쳐 별칭과 글리프 셋을 설정하세요. 별칭이나 원본 글꼴을 두 번 누르면 원본 코드를 봅니다.'
         InheritanceHint='● = 개별 설정. 상위 변경은 상속 중인 값에만 전파됩니다. 개별 값을 두 번 누르거나 선택 후 Delete를 누르면 초기화합니다.'
     }
     $table=$english; if($Language -eq 'ko-KR'){$table=$korean}

@@ -53,10 +53,10 @@ function Invoke-FontBuild {
             if ($replacement) {
                 # Do not force FONTFLAG_CUSTOM: disabling compatibility fallback
                 # caused missing Hangul despite Windows GDI glyph success.
-                $customFlag=Find-KvChild $record.VariantNode 'custom'
+                $customFlag=Find-KvChild $record.GlyphSetNode 'custom'
                 if($customFlag){$customFlag.Value='0'}
-                else{$record.VariantNode.Children.Add((New-KvNode 'custom' $true '0' @() 'generated' 0))}
-                $bitmapFlag=Find-KvChild $record.VariantNode 'bitmap'
+                else{$record.GlyphSetNode.Children.Add((New-KvNode 'custom' $true '0' @() 'generated' 0))}
+                $bitmapFlag=Find-KvChild $record.GlyphSetNode 'bitmap'
                 if($bitmapFlag){$bitmapFlag.Value='0'}
             }
         }
@@ -69,26 +69,26 @@ function Invoke-FontBuild {
             }
         }
         if($nodeSize -gt 0){
-            $originalTall=Find-KvChild $record.VariantNode 'tall'
+            $originalTall=Find-KvChild $record.GlyphSetNode 'tall'
             if($originalTall -and $originalTall.Value -match '^\d+$' -and [int]$originalTall.Value -gt 0){$factorValue=$nodeSize/[double]$originalTall.Value;$hasFactor=$true}
         }
         if ($hasFactor) {
             if ($nodeSize -eq 0 -and ($factorValue -lt 0.1 -or $factorValue -gt 4 -or [Math]::Abs($factorValue*10-[Math]::Round($factorValue*10)) -gt 0.0001)) { throw 'Factor must be 0.1..4.0 in steps of 0.1.' }
-            foreach($property in $record.VariantNode.Children) {
+            foreach($property in $record.GlyphSetNode.Children) {
                 if($property.Key -in @('tall','tall_lodef','tall_hidef') -and $property.Value -match '^\d+$' -and [int]$property.Value -gt 0) {
                     $property.Value=[string][Math]::Max(1,[Math]::Round([double]$property.Value*$factorValue,0,[MidpointRounding]::AwayFromZero))
                 }
             }
-            $bitmap=Find-KvChild $record.VariantNode 'bitmap'
+            $bitmap=Find-KvChild $record.GlyphSetNode 'bitmap'
             if($bitmap -and $bitmap.Value -eq '1'){
                 foreach($scaleKey in @('scalex','scaley')){
-                    $property=Find-KvChild $record.VariantNode $scaleKey
+                    $property=Find-KvChild $record.GlyphSetNode $scaleKey
                     $originalScale=1.0; if($property){$originalScale=[double]::Parse($property.Value,[Globalization.CultureInfo]::InvariantCulture)}
                     $scaled=($originalScale*$factorValue).ToString('0.######',[Globalization.CultureInfo]::InvariantCulture)
-                    if($property){$property.Value=$scaled}else{$record.VariantNode.Children.Add((New-KvNode $scaleKey $true $scaled @() 'generated' 0))}
+                    if($property){$property.Value=$scaled}else{$record.GlyphSetNode.Children.Add((New-KvNode $scaleKey $true $scaled @() 'generated' 0))}
                 }
             }
-            $tall=Find-KvChild $record.VariantNode 'tall'; if($tall){$record.Tall=$tall.Value}
+            $tall=Find-KvChild $record.GlyphSetNode 'tall'; if($tall){$record.Tall=$tall.Value}
             if($factorValue -ne 1){$sizeChanged++}
         }
         $newSize = 0
@@ -97,14 +97,14 @@ function Invoke-FontBuild {
         if($nodeSize -gt 0){$newSize=$nodeSize}
         if ($newSize -gt 0) {
             if ($newSize -gt 512) { throw 'Font size must be 1..512 VGUI pixels.' }
-            $tall = Find-KvChild $record.VariantNode 'tall'
-            if (-not $tall) { $tall = New-KvNode 'tall' $true ([string]$newSize) @() $record.Source $record.Line; $record.VariantNode.Children.Add($tall) }
+            $tall = Find-KvChild $record.GlyphSetNode 'tall'
+            if (-not $tall) { $tall = New-KvNode 'tall' $true ([string]$newSize) @() $record.Source $record.Line; $record.GlyphSetNode.Children.Add($tall) }
             else { $tall.Value = [string]$newSize }
             $record.Tall=[string]$newSize
             $sizeChanged++
         }
-        $properties=New-StringList;foreach($property in $record.VariantNode.Children){if($property.HasValue){$properties.Add($property.Key+'='+$property.Value)}}
-        Write-VfcLog 'DEBUG' ('Font definition: scheme={0}; alias={1}; variant={2}; source={3}:{4}; original={5}; effective={6}; originalTall={7}; finalTall={8}; factor={9}; selected={10}; kind={11}; condition={12}; properties={13}' -f $record.Scheme,$record.Alias,$record.Variant,$record.Source,$record.Line,$record.Font,$record.Node.Value,$initialTall,$record.Tall,$factorValue,[bool]$replacement,$record.Kind,$record.Condition,([string]::Join(';',$properties.ToArray())))
+        $properties=New-StringList;foreach($property in $record.GlyphSetNode.Children){if($property.HasValue){$properties.Add($property.Key+'='+$property.Value)}}
+        Write-VfcLog 'DEBUG' ('Font definition: scheme={0}; alias={1}; glyphset={2}; source={3}:{4}; original={5}; effective={6}; originalTall={7}; finalTall={8}; factor={9}; selected={10}; kind={11}; condition={12}; properties={13}' -f $record.Scheme,$record.Alias,$record.GlyphSet,$record.Source,$record.Line,$record.Font,$record.Node.Value,$initialTall,$record.Tall,$factorValue,[bool]$replacement,$record.Kind,$record.Condition,([string]::Join(';',$properties.ToArray())))
     }
     # Bundle effective original families too, without broadening their existing
     # language ranges. A portable override must not depend on local installations.
@@ -199,7 +199,7 @@ function Invoke-FontBuild {
         if($FactorMap){$profile.Factors=$FactorMap}
         if($HierarchyProfile){$profile=$HierarchyProfile}
         Save-FontProfile $GamePath $profile
-        $changes=@($records | Where-Object {$_.Node.Value -cne $_.Font} | ForEach-Object {[pscustomobject]@{Scheme=$_.Scheme;Alias=$_.Alias;Variant=$_.Variant;Original=$_.Font;Replacement=$_.Node.Value;Size=$_.Tall}})
+        $changes=@($records | Where-Object {$_.Node.Value -cne $_.Font} | ForEach-Object {[pscustomobject]@{Scheme=$_.Scheme;Alias=$_.Alias;GlyphSet=$_.GlyphSet;Original=$_.Font;Replacement=$_.Node.Value;Size=$_.Tall}})
         $info=@{Application='VGUIFontChanger';Version=1;AppliedAt=[DateTimeOffset]::Now.ToString('o');GameCode=[IO.Path]::GetFileName($gameDirectory);Changes=$changes;Assets=@($assets.Keys);SchemeFiles=@($payloads.Keys);Uninstall="Exit the game, then delete custom/$OutputModName (or use File > Remove override).";Backup=$backupArchive}
         Write-SettingsFile (Join-Path $outputRoot 'VGUIFontChanger-info.json') $info
         [IO.File]::WriteAllText((Join-Path $outputRoot 'README.txt'),("VGUIFontChanger portable font override"+[Environment]::NewLine+"Applied: "+$info.AppliedAt+[Environment]::NewLine+"Copy this whole folder to the same game's custom folder on another Windows PC."+[Environment]::NewLine+$info.Uninstall+[Environment]::NewLine+"See VGUIFontChanger-info.json for changes and asset hashes."),(New-Object Text.UTF8Encoding($false)))

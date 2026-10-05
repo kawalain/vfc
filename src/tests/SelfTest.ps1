@@ -46,7 +46,7 @@ function Invoke-VguiSelfTest {
         if($text -notmatch '"koreana"' -or $text -match '"korean"' -or $text -notmatch '"font"\s+"resource/fonts/vguifontchanger/'){throw 'Custom font registration self-test failed'}
         $textRecords=@(Get-FontRecords @($fixture) | Where-Object Kind -eq 'Text')
         foreach($record in $textRecords){
-            if((Find-KvChild $record.VariantNode 'custom').Value -ne '0'){throw 'Asian fallback preservation test failed'}
+            if((Find-KvChild $record.GlyphSetNode 'custom').Value -ne '0'){throw 'Asian fallback preservation test failed'}
             $registration=(Find-KvChild (Find-KvRoot $fixture 'Scheme') 'CustomFontFiles').Children | Where-Object {(Find-KvChild $_ 'name').Value -eq $record.Node.Value} | Select-Object -First 1
             $range=Find-KvChild (Find-KvChild $registration 'koreana') 'range'
             $bounds=$range.Value -split '\s+'
@@ -73,7 +73,7 @@ function Invoke-VguiSelfTest {
             if((Get-UiText 'Apply' $language) -match 'TF2'){throw 'Game-specific UI string test failed'}
             $context=Get-NumberedContext "first`nname Tahoma`nthird" 2
             if($context.Text.Substring($context.Offset,$context.Length) -notmatch '2\s+name Tahoma'){throw 'Numbered context test failed'}
-            $usage=[pscustomobject]@{Font='Tahoma';Locations=@([pscustomobject]@{Source='fixture';Line=2;Alias='Text';Variant='1';Scheme='fixture';Context=$context})}
+            $usage=[pscustomobject]@{Font='Tahoma';Locations=@([pscustomobject]@{Source='fixture';Line=2;Alias='Text';GlyphSet='1';Scheme='fixture';Context=$context})}
             Show-FontUsesWindow $null $usage $language -SmokeTest
             $Locale=$language; Show-VguiFontGui -SmokeTest
         }

@@ -26,7 +26,7 @@ function Invoke-PortableSelfTest {
         if(-not [IO.File]::Exists((Join-Path $generated 'VGUIFontChanger-info.json'))){throw 'Portable output ownership/information manifest is missing'}
         $copied=@(Get-ChildItem -LiteralPath (Join-Path $generated 'resource/fonts/vguifontchanger') -File)
         if($copied.Count -ne 1 -or $copied[0].BaseName -notmatch '^[A-F0-9]{64}$'){throw 'Selecting the original family must still copy its full SHA256-named font file'}
-        $node=($result.Records|Select-Object -First 1).VariantNode
+        $node=($result.Records|Select-Object -First 1).GlyphSetNode
         if((Find-KvChild $node 'custom').Value -ne '0'){throw 'Explicit original-family selection must also restore Asian fallback'}
         $relocated=Join-Path $root 'relocated';Copy-Item -LiteralPath $generated -Destination $relocated -Recurse
         foreach($entry in (Find-KvChild (Find-KvRoot $result.Documents[0] 'Scheme') 'CustomFontFiles').Children){
