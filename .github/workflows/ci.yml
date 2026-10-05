@@ -68,13 +68,12 @@ jobs:
         run: |
           # GitHub serves release assets as application/octet-stream, which
           # Windows PowerShell 5.1 decodes as Latin-1 and corrupts the UTF-8
-          # payload (BOM becomes "ï»¿" and localized text breaks). This ASCII
-          # bootstrap is immune to that: it re-fetches the real script and
-          # decodes it as UTF-8 before invoking it.
+          # payload (the BOM becomes "i" + two broken characters and localized
+          # text breaks). This ASCII bootstrap is immune to that: it re-fetches
+          # the real script and decodes it as UTF-8 before invoking it.
           $target = 'https://github.com/{0}/releases/download/v{1}/VGUIFontChanger.ps1' -f $env:GITHUB_REPOSITORY, $env:VFC_VERSION
-          $bootstrap = @'
-$b=irm '__TARGET__';if($b -is [byte[]]){$t=[Text.Encoding]::UTF8.GetString($b)}elseif($b -is [string] -and $b.Length -gt 2 -and [int]$b[0] -eq 239 -and [int]$b[1] -eq 187 -and [int]$b[2] -eq 191){$t=[Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(28591).GetBytes($b))}else{$t=[string]$b};if($t.Length -and $t[0] -eq [char]0xFEFF){$t=$t.Substring(1)};iex $t
-'@
+          # One single-quoted literal; doubled quotes embed the inner quotes.
+          $bootstrap = '$b=irm ''__TARGET__'';if($b -is [byte[]]){$t=[Text.Encoding]::UTF8.GetString($b)}elseif($b -is [string] -and $b.Length -gt 2 -and [int]$b[0] -eq 239 -and [int]$b[1] -eq 187 -and [int]$b[2] -eq 191){$t=[Text.Encoding]::UTF8.GetString([Text.Encoding]::GetEncoding(28591).GetBytes($b))}else{$t=[string]$b};if($t.Length -and $t[0] -eq [char]0xFEFF){$t=$t.Substring(1)};iex $t'
           $bootstrap = $bootstrap.Replace('__TARGET__', $target)
           [IO.File]::WriteAllText((Join-Path $PWD 'bootstrap.ps1'), $bootstrap, (New-Object Text.ASCIIEncoding))
       - name: Collect release notes
