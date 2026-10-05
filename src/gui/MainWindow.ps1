@@ -59,7 +59,10 @@ function Show-VguiFontGui {
     $null=$statusBar.Items.Add($status)
     $versionStatus=New-Object Windows.Forms.ToolStripStatusLabel
     $versionStatus.Text=if($script:VfcCommit){('{0} ({1})' -f $script:VfcVersion,$script:VfcCommit)}else{[string]$script:VfcVersion}
+    $versionStatus.IsLink=$true
     $null=$statusBar.Items.Add($versionStatus)
+    $openLink=${function:Open-WebAddress};$buildUrl=Get-BuildCommitUrl
+    $versionStatus.Add_Click({try{& $openLink $buildUrl}catch{}}.GetNewClosure())
     $grid=New-Object VguiFontGrid; $grid.Dock='Fill';$grid.AllowUserToAddRows=$false;$grid.AllowUserToDeleteRows=$false
     $grid.RowHeadersVisible=$false;$grid.SelectionMode='FullRowSelect';$grid.MultiSelect=$true;$grid.ReadOnly=$true;$grid.AutoSizeColumnsMode='Fill';$grid.RowTemplate.Height=42
     $null=$grid.Columns.Add('Node','Key')
@@ -204,6 +207,7 @@ function Show-VguiFontGui {
         $scaleLabel.Text=('{0:0.0}x' -f ($scale.Value/10.0))
         $state.Theme=Get-UiTheme $state.Model.Preferences.Theme;$state.ThemeName=$state.Theme.Name
         Apply-ControlTheme $form $state.Theme;Apply-ControlTheme $menu $state.Theme;Apply-ControlTheme $statusBar $state.Theme
+        $versionStatus.LinkColor=$state.Theme.Accent;$versionStatus.ActiveLinkColor=$state.Theme.Accent;$versionStatus.VisitedLinkColor=$state.Theme.Accent
         Apply-ControlTheme $context $state.Theme;Apply-ControlTheme $contextPanel $state.Theme
         & $refreshRows
         & $syncToolbar
@@ -708,7 +712,7 @@ function Show-VguiFontGui {
                 $null=Invoke-ModelHistory $state.Model 'Undo';& $refresh
                 if([string]$grid.Rows[2].Cells['Scale'].Value -ne ''){throw 'Paste undo did not restore inheritance'}
                 if($commands.Save.ShortcutKeys -ne [Windows.Forms.Keys]'Control,S' -or $commands.Apply.ShortcutKeys -ne [Windows.Forms.Keys]'Control,Shift,A'){throw 'Save/apply shortcuts failed'}
-                if($versionStatus.Text -notmatch '^\d+\.\d+\.\d+'){throw 'Status bar version failed'}
+                if($versionStatus.Text -notmatch '^\d+\.\d+\.\d+' -or -not $versionStatus.IsLink){throw 'Status bar version failed'}
                 if(-not $commands.LaunchGame.CheckOnClick){throw 'Launch game option failed'}
                 $commands.LaunchGame.PerformClick()
                 if(-not $state.Model.Preferences.LaunchGame){throw 'Launch game preference toggle failed'}

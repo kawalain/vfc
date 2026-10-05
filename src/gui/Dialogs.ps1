@@ -38,6 +38,20 @@ function Get-MaintainerProfileTarget {
     }
     return 'https://steamcommunity.com/id/kawalain'
 }
+function Open-WebAddress {
+    param([string]$Url,[scriptblock]$Launcher)
+    if(-not $Launcher){$Launcher={param($target)
+        $start=New-Object Diagnostics.ProcessStartInfo;$start.FileName=$target;$start.UseShellExecute=$true
+        $null=[Diagnostics.Process]::Start($start)
+    }}
+    & $Launcher $Url
+}
+function Get-BuildCommitUrl {
+    # Without build-time commit information (e.g. running from sources) the
+    # project home page is the best available target.
+    if($script:VfcCommit){return ($script:VfcRepository+'/commit/'+$script:VfcCommit)}
+    return $script:VfcRepository
+}
 function Open-MaintainerProfile {
     param([scriptblock]$Launcher)
     if(-not $Launcher){$Launcher={param($target)
@@ -56,13 +70,15 @@ function New-AboutDialog {
     if(-not $Theme){$Theme=Get-UiTheme 'System'}
     $window=New-Object VguiAboutForm;$window.Text='About VGUIFontChanger';$window.StartPosition='CenterParent'
     $window.FormBorderStyle='FixedDialog';$window.MaximizeBox=$false;$window.MinimizeBox=$false;$window.ShowInTaskbar=$false
-    $title=New-Object Windows.Forms.Label;$title.Text='VGUIFontChanger'
+    $title=New-Object Windows.Forms.LinkLabel;$title.Text='VGUIFontChanger'
+    $null=$title.Links.Add(0,$title.Text.Length,$script:VfcRepository)
     $description=New-Object Windows.Forms.Label;$description.Text=Get-UiText 'AboutDescription' $Language
     # Credits are deliberately identical in every locale.
     $credits=New-Object Windows.Forms.LinkLabel;$credits.Text='Built by Codex · Maintained by kawalain'
     $null=$credits.Links.Add($credits.Text.IndexOf('kawalain'),'kawalain'.Length,'https://steamcommunity.com/id/kawalain')
-    $version=New-Object Windows.Forms.Label
+    $version=New-Object Windows.Forms.LinkLabel
     $version.Text=if($script:VfcCommit){('{0} ({1})' -f $script:VfcVersion,$script:VfcCommit)}else{[string]$script:VfcVersion}
+    if($script:VfcCommit){$null=$version.Links.Add(0,$version.Text.Length,(Get-BuildCommitUrl))}
     $message=New-Object Windows.Forms.Label;$message.AutoEllipsis=$true
     $progress=New-Object Windows.Forms.ProgressBar;$progress.Style='Marquee';$progress.MarqueeAnimationSpeed=30
     $button=New-Object Windows.Forms.Button
@@ -77,7 +93,7 @@ function New-AboutDialog {
     $dialog=@{Window=$window;Title=$title;Description=$description;Credits=$credits;Version=$version;Message=$message;Progress=$progress;Button=$button;Fonts=@{};Operation=$Operation;Language=$Language}
     # Capture helper scriptblocks explicitly: event closures live in a dynamic
     # module, where functions defined by a downloaded script aren't guaranteed.
-    $metricFont=${function:Get-UiMetricFont};$uiText=${function:Get-UiText};$openProfile=${function:Open-MaintainerProfile}
+    $metricFont=${function:Get-UiMetricFont};$uiText=${function:Get-UiText};$openProfile=${function:Open-MaintainerProfile};$openUrl=${function:Open-WebAddress}
     $metrics={
         $ratio=$window.UiDpi/96.0
         $window.Font=& $metricFont $dialog.Fonts -Dpi $window.UiDpi
@@ -99,12 +115,20 @@ function New-AboutDialog {
     $credits.Add_LinkClicked({param($sender,$e)
         try{& $openProfile}catch{[Windows.Forms.MessageBox]::Show($window,$_.Exception.Message,'VGUIFontChanger','OK','Error')|Out-Null}
     }.GetNewClosure())
+    $title.Add_LinkClicked({param($sender,$e)
+        try{& $openUrl ([string]$e.Link.LinkData)}catch{[Windows.Forms.MessageBox]::Show($window,$_.Exception.Message,'VGUIFontChanger','OK','Error')|Out-Null}
+    }.GetNewClosure())
+    $version.Add_LinkClicked({param($sender,$e)
+        try{& $openUrl ([string]$e.Link.LinkData)}catch{[Windows.Forms.MessageBox]::Show($window,$_.Exception.Message,'VGUIFontChanger','OK','Error')|Out-Null}
+    }.GetNewClosure())
     if($isOperation){$button.Add_Click({
         if($Operation.CanCancel -and -not $Operation.Cancel){
             $Operation.Cancel=$true;$button.Enabled=$false;$message.Text=& $uiText 'Cancelling' $Language
         }
     }.GetNewClosure())}
     Apply-ControlTheme $window $Theme;$credits.LinkColor=$Theme.Accent;$credits.ActiveLinkColor=$Theme.Accent;$credits.VisitedLinkColor=$Theme.Accent
+    $title.LinkColor=$Theme.Accent;$title.ActiveLinkColor=$Theme.Accent;$title.VisitedLinkColor=$Theme.Accent
+    if($script:VfcCommit){$version.LinkColor=$Theme.Accent;$version.ActiveLinkColor=$Theme.Accent;$version.VisitedLinkColor=$Theme.Accent}
     & $metrics
     return $dialog
 }
@@ -134,6 +158,10 @@ function Show-AboutWindow {
             if($credits.Text.Substring($credits.Links[0].Start,$credits.Links[0].Length) -cne 'kawalain'){throw 'About author link range failed'}
             if($description.Text -cne (Get-UiText 'AboutDescription' $Language)){throw 'About description locale failed'}
             if($dialog.Version.Text -notmatch '^\d+\.\d+\.\d+'){throw 'About version label failed'}
+            if($dialog.Title.Links.Count -ne 1 -or $dialog.Title.Links[0].LinkData -ne $script:VfcRepository){throw 'About title link failed'}
+            if($script:VfcCommit){
+                if($dialog.Version.Links.Count -ne 1 -or $dialog.Version.Links[0].LinkData -cne (Get-BuildCommitUrl)){throw 'About version link failed'}
+            }elseif($dialog.Version.Links.Count -ne 0){throw 'About version link failed'}
             if($window.Font.FontFamily.Name -ne [Drawing.SystemFonts]::MessageBoxFont.FontFamily.Name){throw 'About must use Windows system UI font'}
             $null=$window.Handle;$window.UpdateUiDpi(144)
             if($window.ClientSize.Width -ne 720){throw 'About dialog DPI test failed'}
