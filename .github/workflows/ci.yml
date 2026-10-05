@@ -41,12 +41,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VFC_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          # Action shells start with ErrorActionPreference=Stop; promote gh's
-          # harmless "release not found" stderr back to a plain exit code.
-          $ErrorActionPreference = 'Continue'
+          # A plain REST lookup avoids native-command stderr/exit-code quirks
+          # under the action shell's ErrorActionPreference=Stop.
           $tag = 'v' + $env:VFC_VERSION
-          $null = gh release view $tag --json tagName 2>$null
-          if ($LASTEXITCODE -eq 0) {
+          $headers = @{ Authorization = 'Bearer ' + $env:GH_TOKEN; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' }
+          $released = $false
+          try {
+            $null = Invoke-RestMethod -Uri ('https://api.github.com/repos/{0}/releases/tags/{1}' -f $env:GITHUB_REPOSITORY, $tag) -Headers $headers -ErrorAction Stop
+            $released = $true
+          } catch { }
+          if ($released) {
             Write-Host "$tag is already released; skipping."
             "release=false" >> $env:GITHUB_OUTPUT
           } else {
