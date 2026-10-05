@@ -2,6 +2,7 @@
 .vs/
 .vscode/
 .codegraph/
+.cortexkit/
 *.user
 *.suo
 Thumbs.db
