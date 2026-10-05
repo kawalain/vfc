@@ -85,7 +85,7 @@ jobs:
             if (-not $groups.Contains($key)) { $groups[$key] = [System.Collections.Generic.List[string]]::new() }
             $groups[$key].Add($line)
           }
-          $notes = [System.Collections.Generic.List[string]]::new(@('## Changes', ''))
+          $notes = [System.Collections.Generic.List[string]]@('## Changes', '')
           foreach ($key in ($order + 'other')) {
             if (-not $groups.Contains($key)) { continue }
             $title = if ($key -eq 'other') { 'Other changes' } else { $headers[$key] }
