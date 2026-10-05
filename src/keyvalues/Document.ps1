@@ -47,7 +47,7 @@ function Select-EffectiveAliasRecords {
     # alias table, so definitions in different files never shadow each other
     # — the binding that matters is the one in the scheme the drawing panel
     # uses. The HUD and most game UI load ClientScheme.res. The engine's own
-    # panels (console, loading screens, dialogs) use the default scheme — the
+    # panels (console, loading screens, dialogs) use the default scheme, the
     # first one loaded, SourceScheme.res — which is also the fallback for any
     # panel without an explicit scheme. Dedicated schemes such as
     # itemtest_scheme.res only apply to the specific panels that load them.

@@ -48,6 +48,13 @@ Q. Is this project slop?
 
 > Yes. 100% slop. But it was useful, right?
 
+Q. I found a problem or want a new feature.
+
+> Open a [GitHub issue](https://github.com/kawalain/vfc/issues) and attach the
+> log file from `%APPDATA%\VGUIFontChanger\logs`. Setting the log level to
+> TRACE (View menu, Log level) before reproducing the problem makes the log
+> much more useful.
+
 See [docs](docs) for the source-tree structure and findings about Source VGUI
 fonts: [structure](docs/STRUCTURE.md), [VGUI notes](docs/VGUI-NOTES.md),
 [font investigation](docs/FONT-INVESTIGATION.md),
