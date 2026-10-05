@@ -98,6 +98,15 @@ function Invoke-VguiSelfTest {
             $script:VfcLogLevel=$previousLogLevel
             if([IO.File]::Exists($logFile)){[IO.File]::Delete($logFile)}
         }
+        $exeRoot=Join-Path ([IO.Path]::GetTempPath()) ('VGUIFontChanger-exe-test-'+[Guid]::NewGuid().ToString('N'))
+        try{
+            $null=[IO.Directory]::CreateDirectory($exeRoot)
+            foreach($name in @('steam.exe','vpk.exe','hl2.exe')){[IO.File]::WriteAllText((Join-Path $exeRoot $name),'')}
+            if((Find-GameExecutable $exeRoot) -ne (Join-Path $exeRoot 'hl2.exe')){throw 'Game executable discovery failed'}
+            if(Test-ProcessPathMatch 'C:\elsewhere\hl2.exe' $exeRoot $exeRoot){throw 'Game process path match failed'}
+            if(-not (Test-ProcessPathMatch ((Join-Path $exeRoot 'tf')+'\hl2.exe') $exeRoot '')){throw 'Game process path match failed'}
+            if(-not (Test-ProcessPathMatch ((Join-Path $exeRoot 'tf').Replace('\','/')+'/hl2.exe') ((Join-Path $exeRoot 'tf').Replace('\','/')+'/tf') $exeRoot)){throw 'Game process path match failed'}
+        }finally{if([IO.Directory]::Exists($exeRoot)){[IO.Directory]::Delete($exeRoot,$true)}}
         $workerState=@{Pipeline=$null;Handle=$null;Work=$null;Task=''}
         Start-GuiTask $workerState 'Scan' '' @{} @{}
         $workerState.Work.Cancel=$true
@@ -121,7 +130,7 @@ function Invoke-VguiSelfTest {
             foreach($font in $previewCache.Values){$font.Dispose()}
             $privateStore.Dispose()
         }
-        'Self-test passed: text/bitmap factors, localized font names, koreana ranges, source viewer, both locales, cancellation, log level filter and GUI controls.'
+        'Self-test passed: text/bitmap factors, localized font names, koreana ranges, source viewer, both locales, cancellation, log level filter, game restart discovery and GUI controls.'
     }finally{
         Set-Item Function:Get-ResolvedSchemes $originalFunction
         $script:Work=$null

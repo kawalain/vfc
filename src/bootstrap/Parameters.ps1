@@ -7,6 +7,7 @@ param(
     [string[]] $Replace,
     [switch] $ListFonts,
     [switch] $DryRun,
+    [switch] $LaunchGame,
     [switch] $ShowSymbols,
     [switch] $Diagnose,
     [string] $TestFont = 'Pretendard GOV Variable',

@@ -52,7 +52,7 @@ function ConvertTo-NodeSettings {
 }
 function New-FontHierarchy {
     param([object[]]$Summary,$Profile,[string]$Language='en-US',[string]$Theme='System')
-    $model=@{Nodes=@{};Roots=(New-StringList);Settings=(ConvertTo-NodeSettings $Profile);Undo=(New-StringList);Redo=(New-StringList);Preferences=@{Locale=$Language;Theme=$Theme;Symbols=$false;ListZoom=1.0;GamePath='';LogLevel='INFO'}}
+    $model=@{Nodes=@{};Roots=(New-StringList);Settings=(ConvertTo-NodeSettings $Profile);Undo=(New-StringList);Redo=(New-StringList);Preferences=@{Locale=$Language;Theme=$Theme;Symbols=$false;ListZoom=1.0;GamePath='';LogLevel='INFO';LaunchGame=$false}}
     foreach($group in $Summary){
         $groupId='group|'+[Uri]::EscapeDataString($group.Font)
         $root=@{Id=$groupId;Parent='';Depth=0;Label=$group.Font;Original=$group.Font;Kind=$group.Kind;Children=(New-StringList);Locations=@($group.Locations);Sizes=$group.Sizes;Expanded=$false}

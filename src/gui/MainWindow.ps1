@@ -23,6 +23,7 @@ function Show-VguiFontGui {
     & $addMenu $fileMenu 'ChooseGame' 'Control,G'; & $addMenu $fileMenu 'Scan' 'F5'
     $null=$fileMenu.DropDownItems.Add((New-Object Windows.Forms.ToolStripSeparator))
     & $addMenu $fileMenu 'Save' 'Control,S'; & $addMenu $fileMenu 'Import' 'Control,O'; & $addMenu $fileMenu 'Export' 'Control,Shift,S'; & $addMenu $fileMenu 'Apply' 'Control,Shift,A'
+    & $addMenu $fileMenu 'LaunchGame' ''; $commands.LaunchGame.CheckOnClick=$true
     & $addMenu $fileMenu 'RemoveOverride' ''; & $addMenu $fileMenu 'OpenAppData' ''
     $null=$fileMenu.DropDownItems.Add((New-Object Windows.Forms.ToolStripSeparator)); & $addMenu $fileMenu 'Exit' 'Alt,F4'
     & $addMenu $editMenu 'Undo' 'Control,Z'; & $addMenu $editMenu 'Redo' 'Control,Y'
@@ -188,6 +189,7 @@ function Show-VguiFontGui {
         $logMenu.Text=Get-UiText 'LogLevel' $language
         foreach($key in $logLevels.Keys){$logLevels[$key].Checked=($key -eq $state.Model.Preferences.LogLevel)}
         $commands.Symbols.Checked=[bool]$state.Model.Preferences.Symbols
+        $commands.LaunchGame.Checked=[bool]$state.Model.Preferences.LaunchGame
         $commands.Undo.Enabled=($state.Model.Undo.Count -gt 0 -and -not $state.Pipeline)
         $commands.Redo.Enabled=($state.Model.Redo.Count -gt 0 -and -not $state.Pipeline)
         $commands.Apply.Enabled=($state.Model.Roots.Count -gt 0 -and -not $state.Pipeline)
@@ -335,6 +337,7 @@ function Show-VguiFontGui {
         $commands[$key].Add_Click({param($sender,$e);if(Invoke-ModelHistory $state.Model ([string]$sender.Tag)){& $rebuildRows;& $refresh;& $persistUi}})
     }
     $commands.Reset.Add_Click({& $resetValues @($grid.SelectedRows | ForEach-Object {[string]$_.Tag})})
+    $commands.LaunchGame.Add_Click({$state.Model.Preferences.LaunchGame=[bool]$commands.LaunchGame.Checked;& $persistUi})
     $commands.Symbols.Add_Click({
         $before=Get-ModelSnapshot $state.Model;$state.Model.Preferences.Symbols=-not $state.Model.Preferences.Symbols
         $null=Complete-ModelChange $state.Model $before;& $rebuildRows;& $refresh;& $persistUi
@@ -693,6 +696,11 @@ function Show-VguiFontGui {
                 $null=Invoke-ModelHistory $state.Model 'Undo';& $refresh
                 if([string]$grid.Rows[2].Cells['Scale'].Value -ne ''){throw 'Paste undo did not restore inheritance'}
                 if($commands.Save.ShortcutKeys -ne [Windows.Forms.Keys]'Control,S' -or $commands.Apply.ShortcutKeys -ne [Windows.Forms.Keys]'Control,Shift,A'){throw 'Save/apply shortcuts failed'}
+                if(-not $commands.LaunchGame.CheckOnClick){throw 'Launch game option failed'}
+                $commands.LaunchGame.PerformClick()
+                if(-not $state.Model.Preferences.LaunchGame){throw 'Launch game preference toggle failed'}
+                $commands.LaunchGame.PerformClick()
+                if($state.Model.Preferences.LaunchGame){throw 'Launch game preference toggle failed'}
                 if($contextPanel.Controls.Count -ne 5 -or $sizeUnit.Text -ne 'px'){throw 'Compact context menu test failed'}
                 $null=$form.Handle;$form.UpdateUiDpi(96)
                 $nodesBefore=$state.Model.Settings|ConvertTo-Json -Depth 12 -Compress

@@ -148,3 +148,70 @@ function Resolve-GamePath {
     foreach($directory in $found){if((Get-GameContext $directory).SteamAppId -eq '440'){return $directory}}
     return $found[0]
 }
+function Test-ProcessPathMatch {
+    param([string]$ProcessPath,[string]$GameDirectory,[string]$InstallDirectory)
+    if(-not $ProcessPath){return $false}
+    $path=$ProcessPath.Replace('/','\').ToLowerInvariant()
+    foreach($directory in @($GameDirectory,$InstallDirectory)){
+        if(-not $directory){continue}
+        $prefix=$directory.Replace('/','\').TrimEnd('\').ToLowerInvariant()+'\'
+        if($path.StartsWith($prefix)){return $true}
+    }
+    return $false
+}
+function Find-GameProcessList {
+    param([string]$GameDirectory,[string]$InstallDirectory)
+    $result=@()
+    foreach($process in [Diagnostics.Process]::GetProcesses()){
+        $path=$null
+        try{$path=$process.MainModule.FileName}catch{}
+        if(Test-ProcessPathMatch $path $GameDirectory $InstallDirectory){$result+=$process;continue}
+        $process.Dispose()
+    }
+    return $result
+}
+function Find-GameExecutable {
+    param([string]$InstallDirectory)
+    foreach($name in @('hl2.exe','tf.exe','tf_win64.exe','hl1.exe','bms.exe','swarm.exe')){
+        $candidate=Join-Path $InstallDirectory $name
+        if([IO.File]::Exists($candidate)){return $candidate}
+    }
+    $fallbacks=@()
+    foreach($file in @(Get-ChildItem -LiteralPath $InstallDirectory -Filter '*.exe' -File -ErrorAction SilentlyContinue)){
+        if($file.Name -imatch '^(steam|vpk|uninstall|uninst|setup|update|crash|hl2_launcher)'){continue}
+        $fallbacks+=$file.FullName
+    }
+    if($fallbacks.Count -eq 1){return $fallbacks[0]}
+    return $null
+}
+function Restart-GameProcess {
+    param([string]$GamePath)
+    $context=Get-GameContext $GamePath
+    $running=@(Find-GameProcessList $context.GameDirectory $context.InstallDirectory)
+    foreach($process in $running){
+        try{
+            Write-VfcLog 'INFO' "Stopping game process: pid=$($process.Id); name=$($process.ProcessName)"
+            if($process.HasExited){continue}
+            $null=$process.CloseMainWindow()
+            if(-not $process.WaitForExit(3000)){$process.Kill()}
+        }catch{Write-VfcLog 'WARN' "Could not stop game process pid=$($process.Id): $($_.Exception.Message)"}finally{$process.Dispose()}
+    }
+    if($running.Count){Write-VfcLog 'INFO' "Game processes stopped: count=$($running.Count)"}
+    if($context.SteamAppId){
+        $start=New-Object Diagnostics.ProcessStartInfo
+        $start.FileName='steam://rungameid/'+$context.SteamAppId
+        $start.UseShellExecute=$true
+        $null=[Diagnostics.Process]::Start($start)
+        Write-VfcLog 'INFO' "Game start requested through Steam: appid=$($context.SteamAppId)"
+        return
+    }
+    $executable=Find-GameExecutable $context.InstallDirectory
+    if($executable){
+        $start=New-Object Diagnostics.ProcessStartInfo
+        $start.FileName=$executable;$start.WorkingDirectory=$context.InstallDirectory;$start.UseShellExecute=$true
+        $null=[Diagnostics.Process]::Start($start)
+        Write-VfcLog 'INFO' "Game started: exe=$executable"
+    }else{
+        Write-VfcLog 'WARN' 'Game start skipped: no executable was found in the install directory.'
+    }
+}

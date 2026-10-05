@@ -12,6 +12,7 @@ function Start-GuiTask {
     $model=if($State.ContainsKey('Model')){$State['Model']}else{$null}
     $State.Work.LogLevel='INFO'
     if($model -and $model.Preferences.ContainsKey('LogLevel') -and $model.Preferences['LogLevel']){$State.Work.LogLevel=[string]$model.Preferences['LogLevel']}
+    $State.Work.LaunchGame=($Task -eq 'Build' -and $model -and $model.Preferences.ContainsKey('LaunchGame') -and $model.Preferences['LaunchGame'])
     $State.Work.LogPath=New-OperationLog $Task $Game
     $State.CurrentLogPath=$State.Work.LogPath
     $State.Task=$Task
@@ -70,6 +71,7 @@ function Start-GuiTask {
             $settings=$null; if($hierarchyProfile){$settings=ConvertTo-NodeSettings $hierarchyProfile}
             if($scanSnapshot){$script:VpkIndexCache=$scanSnapshot.Indexes}
             Invoke-FontBuild $game $mod $map $null -FactorMap $factors -NodeSettings $settings -HierarchyProfile $hierarchyProfile -ScanSnapshot $scanSnapshot
+            if($operationState.LaunchGame){Restart-GameProcess $game}
         }
         Write-VfcLog 'INFO' "Operation finished: task=$task"
         }catch{Write-VfcLog 'ERROR' ($_.ToString()+[Environment]::NewLine+$_.Exception.ToString()+[Environment]::NewLine+$_.ScriptStackTrace);throw}

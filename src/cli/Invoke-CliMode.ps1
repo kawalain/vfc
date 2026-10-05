@@ -46,7 +46,10 @@ function Invoke-CliMode {
         $hierarchyProfile=$savedProfile;$hierarchyProfile.Remove('Preferences');$hierarchyProfile.Nodes=$nodeSettings
     }
     $result = Invoke-FontBuild $resolvedPath $OutputModName $map $DefaultFont -WhatIf:$DryRun -SizeMap $sizes -TextSize $DefaultSize -FactorMap $factors -NodeSettings $nodeSettings -HierarchyProfile $hierarchyProfile
-    if ($DryRun) { Write-Host 'Dry run complete.' } else { Write-Host 'Override created.' }
+    if ($DryRun) { Write-Host 'Dry run complete.' } else {
+        Write-Host 'Override created.'
+        if($LaunchGame){Restart-GameProcess $resolvedPath}
+    }
     Write-Host "Changed: $($result.Changed) / $($result.Total) definitions"
     Write-Host "Size changes: $($result.SizeChanged)"
     Write-Host "Output:  $($result.Output)"

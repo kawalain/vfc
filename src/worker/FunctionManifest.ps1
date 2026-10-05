@@ -9,5 +9,5 @@ $script:WorkerFunctionNames += @('Get-ScanCacheDirectory','Get-ContentSha256','G
 $script:WorkerFunctionNames += 'Initialize-ScanCacheRuntime'
 $script:WorkerFunctionNames += @('Write-VfcLog','Initialize-OperationRuntime','New-OutputBackup','Get-ManagedOutputRoot','Remove-FontOverride','ConvertTo-PortableGameFonts','Test-GeneratedFontRanges','Disable-LegacyFontOverride')
 $script:WorkerFunctionNames += 'Remove-CommitStage'
-$script:WorkerFunctionNames += @('Get-SteamLibraries','Get-GameContext','Expand-GameSearchPath','Get-SchemeVirtualPaths','Get-GeneratedFontDirectory','Read-LayoutPreferences','Get-WindowsGuiLocale')
+$script:WorkerFunctionNames += @('Get-SteamLibraries','Get-GameContext','Expand-GameSearchPath','Get-SchemeVirtualPaths','Get-GeneratedFontDirectory','Read-LayoutPreferences','Get-WindowsGuiLocale','Test-ProcessPathMatch','Find-GameProcessList','Find-GameExecutable','Restart-GameProcess')
 $script:WorkerFunctionNames += @('Test-VariableFontFile','New-FontBackendDocument','Get-CanonicalFontName','Add-FontUsageContext','Get-NumberedContext','ConvertTo-PlainValue','ConvertTo-NodeSettings')
