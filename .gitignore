@@ -41,3 +41,7 @@ refs/
 
 # Generated distribution script (built by CI from src/; never commit it)
 VGUIFontChanger.ps1
+
+# Local GameBanana distribution variant
+README.fb
+README.html
