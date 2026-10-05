@@ -1,6 +1,6 @@
 function Get-WorkerLibrary {
     $parts=New-StringList
-    $parts.Add('$script:LogPath=""')
+    $parts.Add('$script:LogPath=""; $script:VfcLogLevel="INFO"')
     $parts.Add('$ErrorActionPreference="Stop"; Set-StrictMode -Version 2.0; $script:VpkIndexCache=@{}; $script:VpkToolIndexCache=@{}; $script:Work=$null; $script:SchemeNames=@("ClientScheme.res","SourceScheme.res","ChatScheme.res"); $script:SymbolFontPattern="(?i)(marlett|webdings|wingdings|symbol|icons?|glyph|buttons?|crosshairs?|halflife2)"; $script:SymbolAliasPattern="(?i)(icon|glyph|button|crosshair)"')
     foreach($name in $script:WorkerFunctionNames){$command=Get-Command $name -CommandType Function; $parts.Add("function $name {"+$command.Definition+[Environment]::NewLine+"}")}
     return [string]::Join([Environment]::NewLine,$parts.ToArray())
@@ -9,6 +9,9 @@ function Start-GuiTask {
     param($State,[string]$Task,[string]$Game,[hashtable]$Fonts,[hashtable]$Factors,$HierarchyProfile)
     if($State.Pipeline){return}
     $State.Work=[hashtable]::Synchronized(@{Cancel=$false;CanCancel=$true;Message='Starting...'})
+    $model=if($State.ContainsKey('Model')){$State['Model']}else{$null}
+    $State.Work.LogLevel='INFO'
+    if($model -and $model.Preferences.ContainsKey('LogLevel') -and $model.Preferences['LogLevel']){$State.Work.LogLevel=[string]$model.Preferences['LogLevel']}
     $State.Work.LogPath=New-OperationLog $Task $Game
     $State.CurrentLogPath=$State.Work.LogPath
     $State.Task=$Task

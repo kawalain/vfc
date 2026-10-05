@@ -52,7 +52,7 @@ function ConvertTo-NodeSettings {
 }
 function New-FontHierarchy {
     param([object[]]$Summary,$Profile,[string]$Language='en-US',[string]$Theme='System')
-    $model=@{Nodes=@{};Roots=(New-StringList);Settings=(ConvertTo-NodeSettings $Profile);Undo=(New-StringList);Redo=(New-StringList);Preferences=@{Locale=$Language;Theme=$Theme;Symbols=$false;ListZoom=1.0;GamePath=''}}
+    $model=@{Nodes=@{};Roots=(New-StringList);Settings=(ConvertTo-NodeSettings $Profile);Undo=(New-StringList);Redo=(New-StringList);Preferences=@{Locale=$Language;Theme=$Theme;Symbols=$false;ListZoom=1.0;GamePath='';LogLevel='INFO'}}
     foreach($group in $Summary){
         $groupId='group|'+[Uri]::EscapeDataString($group.Font)
         $root=@{Id=$groupId;Parent='';Depth=0;Label=$group.Font;Original=$group.Font;Kind=$group.Kind;Children=(New-StringList);Locations=@($group.Locations);Sizes=$group.Sizes;Expanded=$false}
@@ -138,18 +138,21 @@ function Get-VisibleFontNodes {
 function Get-FontSearchMatches {
     param($Model,[string]$Query)
     if([string]::IsNullOrWhiteSpace($Query)){return}
+    # Matches are limited to groups and aliases; variants would flood the
+    # results because every alias owns several of them.
     $query=$Query.Trim();$matches=New-StringList
     $visit={param([string]$id)
         $node=$Model.Nodes[$id]
-        $fields=New-StringList
-        $fields.Add([string]$node.Label);$fields.Add([string]$node.Original);$fields.Add([string](Get-NodeValue $Model $id 'Font'))
-        if($node.Depth -gt 0){
-            foreach($location in $node.Locations){
-                foreach($key in @('Alias','Scheme','Source')){$fields.Add([string]$location.$key)}
-                if($node.Depth -eq 2){$fields.Add([string]$location.Variant);$fields.Add([string]$location.Condition)}
+        if($node.Depth -le 1){
+            $fields=New-StringList
+            $fields.Add([string]$node.Label);$fields.Add([string]$node.Original);$fields.Add([string](Get-NodeValue $Model $id 'Font'))
+            if($node.Depth -eq 1){
+                foreach($location in $node.Locations){
+                    foreach($key in @('Alias','Scheme','Source')){$fields.Add([string]$location.$key)}
+                }
             }
+            foreach($field in $fields){if($field.IndexOf($query,[StringComparison]::OrdinalIgnoreCase) -ge 0){$matches.Add($id);break}}
         }
-        foreach($field in $fields){if($field.IndexOf($query,[StringComparison]::OrdinalIgnoreCase) -ge 0){$matches.Add($id);break}}
         foreach($child in $node.Children){& $visit $child}
     }
     foreach($id in $Model.Roots){

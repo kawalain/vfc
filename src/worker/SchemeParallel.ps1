@@ -16,7 +16,7 @@ function Get-SchemeDocumentsParallel {
             $pipeline=[PowerShell]::Create();$pipeline.RunspacePool=$pool
             $worker={param($sources,$path,$indexes,$work)
                 $ErrorActionPreference='Stop';Set-StrictMode -Version 2.0
-                $script:VpkIndexCache=$indexes;$script:VpkToolIndexCache=@{};$script:Work=$work;$script:LogPath=''
+                $script:VpkIndexCache=$indexes;$script:VpkToolIndexCache=@{};$script:Work=$work;$script:LogPath='';$script:VfcLogLevel='INFO'
                 Test-WorkCancellation
                 if(-not (Read-VirtualFile $sources $path)){return}
                 try{Resolve-KvDocument $sources $path @{}}

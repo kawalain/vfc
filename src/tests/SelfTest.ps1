@@ -87,6 +87,17 @@ function Invoke-VguiSelfTest {
         try{Test-WorkCancellation}catch [OperationCanceledException]{$cancelled=$true}
         if(-not $cancelled){throw 'Cancellation test failed'}
         $script:Work=$null
+        $logFile=Join-Path ([IO.Path]::GetTempPath()) ('VGUIFontChanger-logtest-'+[Guid]::NewGuid().ToString('N')+'.log')
+        $previousLogLevel=$script:VfcLogLevel;$script:VfcLogLevel='WARN'
+        try{
+            Write-VfcLog 'DEBUG' 'debug suppressed' -LogFile $logFile
+            Write-VfcLog 'ERROR' 'error kept' -LogFile $logFile
+            $text=if([IO.File]::Exists($logFile)){[IO.File]::ReadAllText($logFile)}else{''}
+            if($text -match 'debug suppressed' -or $text -notmatch 'error kept'){throw 'Log level filter test failed'}
+        }finally{
+            $script:VfcLogLevel=$previousLogLevel
+            if([IO.File]::Exists($logFile)){[IO.File]::Delete($logFile)}
+        }
         $workerState=@{Pipeline=$null;Handle=$null;Work=$null;Task=''}
         Start-GuiTask $workerState 'Scan' '' @{} @{}
         $workerState.Work.Cancel=$true
@@ -110,7 +121,7 @@ function Invoke-VguiSelfTest {
             foreach($font in $previewCache.Values){$font.Dispose()}
             $privateStore.Dispose()
         }
-        'Self-test passed: text/bitmap factors, localized font names, koreana ranges, source viewer, both locales, cancellation and GUI controls.'
+        'Self-test passed: text/bitmap factors, localized font names, koreana ranges, source viewer, both locales, cancellation, log level filter and GUI controls.'
     }finally{
         Set-Item Function:Get-ResolvedSchemes $originalFunction
         $script:Work=$null

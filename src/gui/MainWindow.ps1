@@ -8,6 +8,7 @@ function Show-VguiFontGui {
     $form.MinimumSize=New-Object Drawing.Size(1000,540); $form.Font=[Drawing.SystemFonts]::MessageBoxFont.Clone(); $form.KeyPreview=$true
     $layout=Read-LayoutPreferences;if($Locale){$layout.Locale=$Locale}
     $model=New-FontHierarchy @() @{Nodes=@{}} $layout.Locale $layout.Theme;$model.Preferences=$layout
+    $script:VfcLogLevel=if($model.Preferences.LogLevel){[string]$model.Preferences.LogLevel}else{'INFO'}
     $state=@{Model=$model;Pipeline=$null;Handle=$null;Work=$null;Task='';Game='';Fonts=@();EditorId='';FontCache=@{};PreviewAvailable=@{};PrivateFamilies=@{};PrivateStores=(New-ObjectList);Sync=$false;Closing=$false;GestureBefore='';SavedNodes='{}';Theme=$null;ThemeName='';ThemeTick=0;Dpi=96;MetricZoom=0;ListFont=$null;UiFont=$null;MetricFonts=@{initial=$form.Font};LayoutSaveAt=$null;OperationDialog=$null;MetricsBusy=$false}
     $menu=New-Object Windows.Forms.MenuStrip
     $fileMenu=New-Object Windows.Forms.ToolStripMenuItem; $editMenu=New-Object Windows.Forms.ToolStripMenuItem; $viewMenu=New-Object Windows.Forms.ToolStripMenuItem
@@ -33,6 +34,8 @@ function Show-VguiFontGui {
     $null=$viewMenu.DropDownItems.Add($languageMenu); $null=$viewMenu.DropDownItems.Add($themeMenu)
     $languages=@{}; foreach($language in @('en-US','ko-KR')){$item=New-Object Windows.Forms.ToolStripMenuItem; $item.Text=if($language -eq 'ko-KR'){'한국어 (ko-KR)'}else{'English (en-US)'}; $item.Tag=$language; $null=$languageMenu.DropDownItems.Add($item);$languages[$language]=$item}
     $themes=@{}; foreach($theme in @('System','Light','Dark','AMOLED')){$item=New-Object Windows.Forms.ToolStripMenuItem;$item.Tag=$theme;$null=$themeMenu.DropDownItems.Add($item);$themes[$theme]=$item}
+    $logMenu=New-Object Windows.Forms.ToolStripMenuItem;$null=$viewMenu.DropDownItems.Add($logMenu)
+    $logLevels=@{}; foreach($level in @('TRACE','DEBUG','INFO','WARN','ERROR')){$item=New-Object Windows.Forms.ToolStripMenuItem;$item.Text=$level;$item.Tag=$level;$null=$logMenu.DropDownItems.Add($item);$logLevels[$level]=$item}
     $form.MainMenuStrip=$menu
     # Hosted controls keep font preview and multi-selection editing inside the menu.
     $context=New-Object Windows.Forms.ContextMenuStrip; $context.AutoClose=$true
@@ -66,7 +69,7 @@ function Show-VguiFontGui {
     $findCount=New-Object Windows.Forms.Label;$findCount.TextAlign='MiddleCenter'
     $findPrevious=New-Object Windows.Forms.Button;$findNext=New-Object Windows.Forms.Button;$findClose=New-Object Windows.Forms.Button;$findClose.Text='×'
     $findPanel.Controls.AddRange(@($findBox,$findCount,$findPrevious,$findNext,$findClose))
-    $state.SearchMatches=@();$state.SearchIndex=-1;$state.SearchDue=$null;$state.SearchQuery=''
+    $state.SearchMatches=@();$state.SearchIndex=-1;$state.SearchDue=$null;$state.SearchQuery='';$state.RowByTag=@{}
     $form.Controls.AddRange(@($grid,$findPanel,$menu,$statusBar))
     $findPanel.BringToFront()
     $state.FindLayoutBusy=$false
@@ -159,7 +162,9 @@ function Show-VguiFontGui {
         $state.Sync=$true
         try{
             $grid.Rows.Clear()
-            foreach($id in @(Get-VisibleFontNodes $state.Model)){$idx=$grid.Rows.Add();$grid.Rows[$idx].Tag=$id;& $rowValues $grid.Rows[$idx]}
+            $rows=@{}
+            foreach($id in @(Get-VisibleFontNodes $state.Model)){$idx=$grid.Rows.Add();$grid.Rows[$idx].Tag=$id;& $rowValues $grid.Rows[$idx];$rows[$id]=$grid.Rows[$idx]}
+            $state.RowByTag=$rows
             $grid.ClearSelection()
             foreach($row in $grid.Rows){if($row.Tag -in $selected){$row.Selected=$true};if($row.Tag -eq $current){$grid.CurrentCell=$row.Cells['Node']}}
         }finally{$state.Sync=$false}
@@ -180,6 +185,8 @@ function Show-VguiFontGui {
         $languageMenu.Text=Get-UiText 'Language' $language;$themeMenu.Text=Get-UiText 'Theme' $language
         foreach($key in $languages.Keys){$languages[$key].Checked=($key -eq $language)}
         foreach($key in $themes.Keys){$themes[$key].Text=Get-UiText ('Theme'+$key) $language;$themes[$key].Checked=($key -eq $state.Model.Preferences.Theme)}
+        $logMenu.Text=Get-UiText 'LogLevel' $language
+        foreach($key in $logLevels.Keys){$logLevels[$key].Checked=($key -eq $state.Model.Preferences.LogLevel)}
         $commands.Symbols.Checked=[bool]$state.Model.Preferences.Symbols
         $commands.Undo.Enabled=($state.Model.Undo.Count -gt 0 -and -not $state.Pipeline)
         $commands.Redo.Enabled=($state.Model.Redo.Count -gt 0 -and -not $state.Pipeline)
@@ -276,17 +283,29 @@ function Show-VguiFontGui {
     $runFind={param([int]$Direction=1,[bool]$Reset=$false)
         if($state.Pipeline){return}
         $state.SearchDue=$null;$query=$findBox.Text.Trim()
-        if($Reset -or $query -cne $state.SearchQuery){$state.SearchIndex=-1}
-        $state.SearchQuery=$query;$state.SearchMatches=@(Get-FontSearchMatches $state.Model $query)
+        # Recompute matches only when the query changes; navigation reuses the
+        # cached result and selects rows directly instead of rebuilding the list.
+        if($Reset -or $query -cne $state.SearchQuery){
+            $state.SearchIndex=-1
+            $state.SearchQuery=$query
+            $state.SearchMatches=@(Get-FontSearchMatches $state.Model $query)
+        }
+        if($state.SearchMatches.Count){$state.SearchMatches=@($state.SearchMatches | Where-Object {$state.Model.Nodes.ContainsKey($_)})}
         $count=$state.SearchMatches.Count
         if(-not $count){$state.SearchIndex=-1;& $updateFindCount;return}
         if($state.SearchIndex -lt 0){$state.SearchIndex=if($Direction -lt 0){$count-1}else{0}}
         else{$state.SearchIndex=($state.SearchIndex+$Direction+$count)%$count}
-        $id=$state.SearchMatches[$state.SearchIndex];$parent=$state.Model.Nodes[$id].Parent
-        while($parent){$state.Model.Nodes[$parent].Expanded=$true;$parent=$state.Model.Nodes[$parent].Parent}
-        & $rebuildRows
+        $id=$state.SearchMatches[$state.SearchIndex]
+        $row=$null
+        if($state.RowByTag.ContainsKey($id)){$row=$state.RowByTag[$id]}
+        if(-not $row){
+            $parent=$state.Model.Nodes[$id].Parent
+            while($parent){$state.Model.Nodes[$parent].Expanded=$true;$parent=$state.Model.Nodes[$parent].Parent}
+            & $rebuildRows
+            if($state.RowByTag.ContainsKey($id)){$row=$state.RowByTag[$id]}
+        }
         $grid.ClearSelection()
-        foreach($row in $grid.Rows){if([string]$row.Tag -eq $id){$grid.CurrentCell=$row.Cells['Node'];$row.Selected=$true;$grid.FirstDisplayedScrollingRowIndex=$row.Index;break}}
+        if($row){$grid.CurrentCell=$row.Cells['Node'];$row.Selected=$true}
         & $updateFindCount
     }
     $openFind={if($state.Pipeline){return};$findPanel.Visible=$true;$findPanel.BringToFront();& $layoutFind;$null=$findBox.Focus();$findBox.SelectAll();& $runFind 0}
@@ -328,6 +347,11 @@ function Show-VguiFontGui {
     foreach($item in $themes.Values){$item.Add_Click({param($sender,$e)
         $before=Get-ModelSnapshot $state.Model;$state.Model.Preferences.Theme=[string]$sender.Tag
         $null=Complete-ModelChange $state.Model $before;& $refresh;& $persistUi
+    })}
+    foreach($item in $logLevels.Values){$item.Add_Click({param($sender,$e)
+        $state.Model.Preferences.LogLevel=[string]$sender.Tag
+        $script:VfcLogLevel=[string]$sender.Tag
+        & $persistUi;& $refresh
     })}
     $commands.Import.Add_Click({
         $dialog=New-Object Windows.Forms.OpenFileDialog;$dialog.Filter='VGUIFontChanger JSON (*.json)|*.json'
@@ -702,22 +726,21 @@ function Show-VguiFontGui {
                 $form.UpdateUiDpi(144);$form.PerformLayout();& $layoutFind
                 if([Math]::Abs(($grid.Right-$findPanel.Right)-18) -gt 1 -or [Math]::Abs(($grid.Bottom-$findPanel.Bottom)-18) -gt 1){throw 'Floating search DPI positioning failed'}
                 $form.UpdateUiDpi(96);$form.Size=$oldFormSize;$form.PerformLayout();& $layoutFind
-                foreach($node in $state.Model.Nodes.Values){$node.Expanded=$false}
+                foreach($node in $state.Model.Nodes.Values){$node.Expanded=$false};& $rebuildRows
                 $findBox.Text='tExT';& $runFind 1 $true
-                if($state.SearchMatches.Count -ne 2 -or [string]$grid.CurrentRow.Tag -ne $root.Children[0] -or -not $root.Expanded){throw 'Case-insensitive key search or ancestor expansion failed'}
+                if($state.SearchMatches.Count -ne 1 -or [string]$grid.CurrentRow.Tag -ne $root.Children[0] -or -not $root.Expanded){throw 'Case-insensitive key search or ancestor expansion failed'}
                 & $runFind 1
-                $leafId=$state.Model.Nodes[$root.Children[0]].Children[0]
-                if([string]$grid.CurrentRow.Tag -ne $leafId -or $grid.Rows.Count -ne 3){throw 'Find next did not reveal collapsed variant'}
-                & $runFind 1;if([string]$grid.CurrentRow.Tag -ne $root.Children[0]){throw 'Find next wrap-around failed'}
-                & $runFind -1;if([string]$grid.CurrentRow.Tag -ne $leafId){throw 'Find previous wrap-around failed'}
+                if([string]$grid.CurrentRow.Tag -ne $root.Children[0] -or $grid.Rows.Count -ne 2){throw 'Find next wrap-around failed'}
+                & $runFind -1
+                if([string]$grid.CurrentRow.Tag -ne $root.Children[0]){throw 'Find previous wrap-around failed'}
                 $findBox.Text='yres 720';& $runFind 1 $true
-                if($state.SearchMatches.Count -ne 1 -or [string]$grid.CurrentRow.Tag -ne $leafId){throw 'Condition/variant search failed'}
+                if($state.SearchMatches.Count -ne 0 -or $state.SearchIndex -ne -1){throw 'Variant condition must not match'}
                 $findBox.Text='FIXTURE';& $runFind 1 $true
-                if($state.SearchMatches.Count -ne 2){throw 'Scheme/source filename search failed'}
+                if($state.SearchMatches.Count -ne 1){throw 'Scheme/source filename search failed'}
                 $findBox.Text='tahoma';& $runFind 1 $true
-                if($state.SearchMatches.Count -ne 3){throw 'Original font search failed'}
-                Set-NodeValue $state.Model $leafId 'Font' 'Arial';$findBox.Text='arial';& $runFind 1 $true
-                if($state.SearchMatches.Count -ne 1 -or [string]$grid.CurrentRow.Tag -ne $leafId){throw 'Replacement font search failed'}
+                if($state.SearchMatches.Count -ne 2){throw 'Original font search failed'}
+                Set-NodeValue $state.Model $root.Children[0] 'Font' 'Arial';$findBox.Text='arial';& $runFind 1 $true
+                if($state.SearchMatches.Count -ne 1 -or [string]$grid.CurrentRow.Tag -ne $root.Children[0]){throw 'Replacement font search failed'}
                 $findBox.Text='[missing*literal]';& $runFind 1 $true
                 if($state.SearchMatches.Count -ne 0 -or $state.SearchIndex -ne -1){throw 'Literal no-match search failed'}
                 $state.Model.Settings=$settingsBeforeSearch;$findBox.Text=''; & $closeFind;& $rebuildRows
@@ -733,7 +756,7 @@ function Show-VguiFontGui {
                         $preview.Save($PreviewPath,[Drawing.Imaging.ImageFormat]::Png)
                     }finally{$preview.Dispose()}
                 }
-                return 'GUI tests passed: Windows UI fonts, floating search/resize/DPI, font/key/file search, label painting, profile isolation and undo.'
+                return 'GUI tests passed: Windows UI fonts, floating search/resize/DPI, alias-scoped font/key/file search, label painting, profile isolation and undo.'
             }finally{$graphics.Dispose();$bitmap.Dispose()}
         }else{$null=$form.ShowDialog()}
     }finally{

@@ -93,6 +93,12 @@ public static class VfcOperationRuntime {
 }
 function Write-VfcLog {
     param([string]$Level='INFO',[string]$Message,[string]$LogFile='')
+    # The threshold comes from the GUI menu ($script:VfcLogLevel) or from the
+    # running operation ($script:Work.LogLevel); workers have no menu state.
+    $threshold=$script:VfcLogLevel;if(-not $threshold){$threshold='INFO'}
+    if($script:Work -and $script:Work.ContainsKey('LogLevel') -and $script:Work.LogLevel){$threshold=[string]$script:Work.LogLevel}
+    $rank=@{TRACE=0;DEBUG=1;INFO=2;WARN=3;ERROR=4}
+    if($rank.ContainsKey($Level) -and $rank.ContainsKey($threshold) -and $rank[$Level] -lt $rank[$threshold]){return}
     $path=$LogFile
     if(-not $path){$path=$script:LogPath;if($script:Work -and $script:Work.ContainsKey('LogPath')){$path=$script:Work.LogPath}}
     if(-not $path){return}

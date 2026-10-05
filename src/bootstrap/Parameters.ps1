@@ -32,4 +32,5 @@ $script:SymbolFontPattern = '(?i)(marlett|webdings|wingdings|symbol|icons?|glyph
 $script:Work = $null
 $script:GameFontPaths = @{}
 $script:LogPath = ''
+$script:VfcLogLevel = 'INFO'
 $script:SymbolAliasPattern = '(?i)(icon|glyph|button|crosshair)'
