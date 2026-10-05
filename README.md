@@ -10,7 +10,7 @@ what can you do ¯\\_(ツ)_/¯
 ## Run
 
 ~~~powershell
-irm https://vfc.vmm.pw | iex
+irm vfc.vmm.pw | iex
 ~~~
 
 See [docs](docs) for the source-tree structure and findings about Source VGUI
