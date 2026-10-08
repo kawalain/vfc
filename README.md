@@ -14,13 +14,13 @@ what can you do ¯\\_(ツ)_/¯
 ## Run
 
 ~~~powershell
-irm vfc.vmm.pw | iex
+irm https://vfc.vmm.pw | iex
 ~~~
 
 To install a specific version instead of the latest release:
 
 ~~~powershell
-irm vfc.vmm.pw/0.2.0 | iex
+irm https://vfc.vmm.pw/0.2.0 | iex
 ~~~
 
 ## Usage
